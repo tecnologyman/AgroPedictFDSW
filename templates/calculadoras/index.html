@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadoras Agrícolas - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* === AGROPREDICT - Calculadoras Agrícolas UI Refinada === */
+
+/* Fondo global */
+body, .main-content {
+  background: #f8f9fc;
+  color: #222;
+}
+
+/* --- Encabezado principal --- */
+.page-header {
+  background: linear-gradient(135deg, #5223ff, #7d5aff, #f78bc9);
+  color: #fff;
+  padding: 52px 40px;
+  border-radius: 18px;
+  margin-bottom: 50px;
+  box-shadow: 0 8px 20px rgba(82, 35, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); /* ✨ mejora contraste */
+}
+
+/* efecto luminoso sutil */
+.page-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 60%);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.page-header h2 {
+  font-family: "Poppins", sans-serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); /* más fuerte en título */
+}
+
+.page-header h2::after {
+  content: "";
+  display: inline-block;
+  height: 4px;
+  width: 60px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  margin-left: 6px;
+}
+
+.page-header p {
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 700px;
+  opacity: 0.95;
+color: rgba(255, 255, 255, 0.92) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Tarjetas de calculadora --- */
+.calculadoras-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+  margin-bottom: 50px;
+}
+
+.calculadora-card {
+  background: #fff;
+  border: 1px solid #ececf0;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.calculadora-card:hover {
+  transform: translateY(-5px);
+  border-color: #7d5aff;
+  box-shadow: 0 8px 20px rgba(125,90,255,0.15);
+}
+
+.calculadora-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.calculadora-categoria {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7d5aff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.calculadora-titulo {
+  font-family: "Poppins", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a2a2a;
+  margin-bottom: 8px;
+}
+
+.calculadora-desc {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+
+.btn-usar {
+  background: linear-gradient(135deg, #5223ff, #7d5aff, #f78bc9);
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  text-align: center;
+}
+
+.btn-usar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(82, 35, 255, 0.25);
+}
+
+/* --- Bloque informativo --- */
+.info-section {
+  background: rgba(77, 196, 123, 0.1);
+  border: 1px solid #4dc47b;
+  border-left: 4px solid #4dc47b;
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.info-section h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d9e61;
+  margin-bottom: 10px;
+}
+
+.info-section p {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: #2d9e61;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* --- Responsividad --- */
+@media (max-width: 1024px) {
+  .calculadoras-grid { grid-template-columns: repeat(2, 1fr); }
+  .page-header { padding: 40px 30px; }
+}
+@media (max-width: 768px) {
+  .calculadoras-grid { grid-template-columns: 1fr; }
+  .page-header h2 { font-size: 24px; }
+  .page-header p { font-size: 14px; }
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header animate-fade-up delay-1">
+    <h2>🧮 Calculadoras Agrícolas</h2>
+    <p>Herramientas especializadas basadas en fórmulas científicas para optimizar la gestión de cultivos, nutrición, riego y rentabilidad agrícola.</p>
+</div>
+
+<!-- Grid de Calculadoras -->
+<div class="calculadoras-grid">
+    <!-- Calculadora 1: Fertilización NPK -->
+    <div class="calculadora-card animate-fade-up delay-2">
+        <div class="calculadora-icon">🧪</div>
+        <div class="calculadora-categoria">Nutrición</div>
+        <div class="calculadora-titulo">Fertilización NPK</div>
+        <p class="calculadora-desc">Cálculo de dosis de fertilizantes basado en análisis de suelo y extracción del cultivo.</p>
+        <a href="{% url 'calculadora_fertilizacion' %}" class="btn-usar">Usar Calculadora</a>
+    </div>
+    
+    <!-- Calculadora 2: Riego -->
+    <div class="calculadora-card animate-fade-up delay-3">
+        <div class="calculadora-icon">💧</div>
+        <div class="calculadora-categoria">Agua</div>
+        <div class="calculadora-titulo">Lámina de Riego</div>
+        <p class="calculadora-desc">Determinación de frecuencia y volumen de riego según evapotranspiración y coeficiente de cultivo.</p>
+        <a href="{% url 'calculadora_agua' %}" class="btn-usar">Usar Calculadora</a>
+    </div>
+    
+    <!-- Calculadora 3: ROI -->
+    <div class="calculadora-card animate-fade-up delay-4">
+        <div class="calculadora-icon">💰</div>
+        <div class="calculadora-categoria">Economía</div>
+        <div class="calculadora-titulo">ROI Agrícola</div>
+        <p class="calculadora-desc">Análisis de retorno sobre inversión y proyección de rentabilidad del cultivo.</p>
+        <a href="{% url 'calculadora_roi' %}" class="btn-usar">Usar Calculadora</a>
+    </div>
+    
+    <!-- Calculadora 4: Siembra -->
+    <div class="calculadora-card animate-fade-up delay-5">
+        <div class="calculadora-icon">🌱</div>
+        <div class="calculadora-categoria">Siembra</div>
+        <div class="calculadora-titulo">Densidad de Siembra</div>
+        <p class="calculadora-desc">Cálculo de cantidad óptima de plantas según densidad objetivo y tasa de supervivencia.</p>
+        <a href="{% url 'calculadora_siembra' %}" class="btn-usar">Usar Calculadora</a>
+    </div>
+    
+    <!-- Calculadora 5: Balance Hídrico -->
+    <div class="calculadora-card animate-fade-up delay-6">
+        <div class="calculadora-icon">🔄</div>
+        <div class="calculadora-categoria">Agua</div>
+        <div class="calculadora-titulo">Balance Hídrico</div>
+        <p class="calculadora-desc">Balance entre precipitación, evapotranspiración y variación de humedad del suelo.</p>
+        <a href="{% url 'calculadora_balance_hidrico' %}" class="btn-usar">Usar Calculadora</a>
+    </div>
+</div>
+
+<!-- Información Importante -->
+<div class="info-section animate-fade-up delay-7">
+    <h3>ℹ️ Información Importante</h3>
+    <p>
+        Todas las fórmulas utilizadas en estas calculadoras están basadas en estudios científicos reconocidos 
+        por organismos agrícolas internacionales. Los resultados son estimaciones y deben considerarse en 
+        conjunto con condiciones locales específicas, consultoría agronómica y análisis de laboratorio.
+    </p>
+</div>
+
+{% endblock %}

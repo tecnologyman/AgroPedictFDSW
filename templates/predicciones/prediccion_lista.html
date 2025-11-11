@@ -1,0 +1,515 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Predicciones - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+    }
+    
+    .page-header h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header .subtitle {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .filters-section {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 32px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .filters-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filter-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: #444444;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .filter-control {
+        padding: 10px 12px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #2A2A2A;
+        background: #FFFFFF;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-control:focus {
+        outline: none;
+        border-color: #7D5AFF;
+        box-shadow: 0 0 0 3px rgba(125, 90, 255, 0.1);
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .btn-filter {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-filtrar {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        flex: 1;
+    }
+    
+    .btn-filtrar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .btn-limpiar {
+        background: #F2F2F2;
+        color: #2A2A2A;
+        border: 1px solid #E6E6E6;
+    }
+    
+    .btn-limpiar:hover {
+        background: #EAEAEA;
+    }
+    
+    .btn-nueva-prediccion {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-nueva-prediccion:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .header-acciones {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    
+    .predicciones-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .prediccion-card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .prediccion-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+    
+    .prediccion-header {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 16px;
+        margin-bottom: 16px;
+        align-items: start;
+    }
+    
+    .prediccion-titulo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .prediccion-icono {
+        font-size: 32px;
+    }
+    
+    .prediccion-info h3 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin: 0 0 4px 0;
+    }
+    
+    .prediccion-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .prediccion-fecha {
+        text-align: right;
+    }
+    
+    .prediccion-fecha p {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: #999999;
+        margin: 0;
+    }
+    
+    .prediccion-estado {
+        background: rgba(77, 196, 123, 0.1);
+        color: #2D9E61;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid #4DC47B;
+        display: inline-block;
+    }
+    
+    .prediccion-estado.pendiente {
+        background: rgba(247, 139, 201, 0.1);
+        color: #F78BC9;
+        border-color: #F78BC9;
+    }
+    
+    .prediccion-estado.error {
+        background: rgba(255, 84, 89, 0.1);
+        color: #FF5459;
+        border-color: #FF5459;
+    }
+    
+    .prediccion-detalles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        padding: 16px 0;
+        border-top: 1px solid #E6E6E6;
+        border-bottom: 1px solid #E6E6E6;
+        margin-bottom: 16px;
+    }
+    
+    .detalle-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detalle-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: #999999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+    }
+    
+    .detalle-valor {
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2A2A2A;
+    }
+    
+    .detalle-valor.highlight {
+        color: #7D5AFF;
+    }
+    
+    .prediccion-acciones {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .btn-accion {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-ver {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        flex: 1;
+    }
+    
+    .btn-ver:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .btn-eliminar {
+        background: #FFE6E6;
+        color: #C72C2C;
+        border: 1px solid #FF5459;
+    }
+    
+    .btn-eliminar:hover {
+        background: #FFD6D6;
+    }
+    
+    .empty-state {
+        background: #FFFFFF;
+        border: 2px dashed #E6E6E6;
+        border-radius: 14px;
+        padding: 48px 24px;
+        text-align: center;
+    }
+    
+    .empty-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    
+    .empty-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .empty-text {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin-bottom: 24px;
+    }
+    
+    .empty-btn {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .empty-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    @media (max-width: 1024px) {
+        .filters-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .prediccion-detalles {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .filters-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-buttons {
+            flex-direction: column;
+        }
+        
+        .prediccion-header {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .prediccion-detalles {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .prediccion-acciones {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="page-header animate-fade-up delay-1">
+    <h2>Historial de Predicciones</h2>
+    <p class="subtitle">Lista completa de todas las predicciones realizadas</p>
+</header>
+
+<!-- Sección de Filtros y Acciones -->
+<div class="header-acciones animate-fade-up delay-2">
+    <div style="flex: 1;"></div>
+    <a href="{% url 'nueva_prediccion' %}" class="btn-nueva-prediccion">➕ Nueva Predicción</a>
+</div>
+
+<!-- Filtros -->
+<div class="filters-section animate-fade-up delay-3">
+    <form method="get" class="filters-form">
+        <div class="filters-row">
+            <!-- Filtro Tipo de Árbol -->
+            <div class="filter-group">
+                <label class="filter-label">Tipo de Árbol</label>
+                <select name="tipo_arbol" class="filter-control">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos_arboles %}
+                        <option value="{{ tipo.id }}" {% if request.GET.tipo_arbol == tipo.id|stringformat:"s" %}selected{% endif %}>
+                            {{ tipo.tipo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtro Región -->
+            <div class="filter-group">
+                <label class="filter-label">Región</label>
+                <select name="region" class="filter-control">
+                    <option value="">Todas</option>
+                    {% for region in regiones %}
+                        <option value="{{ region.id }}" {% if request.GET.region == region.id|stringformat:"s" %}selected{% endif %}>
+                            {{ region.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtro Estado -->
+            <div class="filter-group">
+                <label class="filter-label">Estado</label>
+                <select name="estado" class="filter-control">
+                    <option value="">Todos</option>
+                    <option value="completada" {% if request.GET.estado == "completada" %}selected{% endif %}>Completada</option>
+                    <option value="pendiente" {% if request.GET.estado == "pendiente" %}selected{% endif %}>Pendiente</option>
+                    <option value="error" {% if request.GET.estado == "error" %}selected{% endif %}>Error</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="filter-buttons">
+            <button type="submit" class="btn-filter btn-filtrar">🔍 Filtrar</button>
+            <a href="{% url 'lista_predicciones' %}" class="btn-filter btn-limpiar">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de Predicciones -->
+{% if predicciones %}
+    <div class="predicciones-list">
+        {% for prediccion in predicciones %}
+            <div class="prediccion-card animate-fade-up delay-{{ forloop.counter|add:3 }}">
+                <!-- Header de la Tarjeta -->
+                <div class="prediccion-header">
+                    <div class="prediccion-titulo">
+                        <div class="prediccion-icono">🌱</div>
+                        <div class="prediccion-info">
+                            <h3>{{ prediccion.tipo_arbol.tipo }}</h3>
+                            <p>{{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="prediccion-fecha">
+                        <p>{{ prediccion.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    
+                    <div>
+                        <span class="prediccion-estado {% if prediccion.estado == 'pendiente' %}pendiente{% elif prediccion.estado == 'error' %}error{% endif %}">
+                            {% if prediccion.estado == "completada" %}✓ Completada{% elif prediccion.estado == "pendiente" %}⏳ Pendiente{% else %}✗ Error{% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Detalles de la Predicción -->
+                {% if prediccion.estado == "completada" %}
+                    <div class="prediccion-detalles">
+                        <div class="detalle-item">
+                            <span class="detalle-label">Hectáreas</span>
+                            <span class="detalle-valor">{{ prediccion.hectareas|floatformat:1 }}</span>
+                        </div>
+                        <div class="detalle-item">
+                            <span class="detalle-label">Edad (años)</span>
+                            <span class="detalle-valor">{{ prediccion.edad_arboles }}</span>
+                        </div>
+                        <div class="detalle-item">
+                            <span class="detalle-label">Ton/Ha</span>
+                            <span class="detalle-valor highlight">{{ prediccion.produccion_por_hectarea|floatformat:2 }}</span>
+                        </div>
+                        <div class="detalle-item">
+                            <span class="detalle-label">Producción Total</span>
+                            <span class="detalle-valor highlight">{{ prediccion.produccion_total|floatformat:2 }} ton</span>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Acciones -->
+                <div class="prediccion-acciones">
+                    <a href="{% url 'prediccion_detalle' prediccion.pk %}" class="btn-accion btn-ver">👁️ Ver Detalles</a>
+                    <form method="POST" action="{% url 'eliminar_prediccion' prediccion.pk %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-accion btn-eliminar" onclick="return confirm('¿Eliminar esta predicción?');">🗑️ Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <!-- Estado Vacío -->
+    <div class="empty-state animate-fade-up delay-4">
+        <div class="empty-icon">📊</div>
+        <h3 class="empty-title">No se encontraron predicciones</h3>
+        <p class="empty-text">
+            {% if request.GET %}
+                No hay predicciones que coincidan con los filtros aplicados.
+            {% else %}
+                Comienza creando tu primera predicción agrícola.
+            {% endif %}
+        </p>
+        <a href="{% url 'nueva_prediccion' %}" class="empty-btn">➕ Crear Primera Predicción</a>
+    </div>
+{% endif %}
+{% endblock %}

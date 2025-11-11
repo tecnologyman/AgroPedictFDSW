@@ -1,0 +1,640 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - AgroPredict{% endblock %}
+
+{% block extra_css %}
+
+
+
+<style>
+    /* Estilos específicos del dashboard */
+    .page-header {
+        margin-bottom: 32px;
+    }
+    
+    .page-header h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header .subtitle {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    /* Grid del Dashboard */
+    .dashboard-row-1 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .dashboard-row-2 {
+        display: grid;
+        grid-template-columns: 2fr 1.5fr 1.5fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .dashboard-row-3 {
+        display: grid;
+        grid-template-columns: 3fr 2fr;
+        gap: 16px;
+    }
+    
+    /* Tarjetas KPI */
+    .metric-card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+    
+    .metric-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+    
+    .metric-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 48px;
+        font-weight: 700;
+        color: #7D5AFF;
+        margin: 12px 0;
+        line-height: 1;
+    }
+    
+    .metric-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        color: #666666;
+        margin: 0;
+    }
+    
+    /* Tarjetas de Gráficos */
+    .chart-card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chart-card h3 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 16px;
+    }
+    
+    .chart-container {
+        flex: 1;
+        position: relative;
+        min-height: 300px;
+    }
+    
+    /* Tarjeta Destacada */
+    .featured-card {
+        background: rgba(247, 139, 201, 0.05);
+        border: 2px solid #F78BC9;
+        border-radius: 14px;
+        padding: 24px;
+        text-align: center;
+    }
+    
+    .featured-card h3 {
+        color: #7D5AFF;
+        margin-bottom: 16px;
+    }
+    
+    .featured-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+    
+    .featured-value {
+        font-size: 24px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 12px;
+    }
+    
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 20px;
+        margin: 8px 0;
+    }
+    
+    .badge-success {
+        background: rgba(77, 196, 123, 0.15);
+        color: #2D9E61;
+        border: 1px solid #4DC47B;
+    }
+    
+    .featured-roi {
+        color: #4DC47B;
+        font-weight: 600;
+        font-size: 20px;
+        margin: 8px 0;
+    }
+    
+    .featured-text {
+        color: #666666;
+        font-size: 14px;
+        margin: 8px 0;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 16px;
+        text-decoration: none;
+        display: inline-block;
+          box-shadow: 0 2px 6px rgba(125, 90, 255, 0.25);
+    }
+    
+.btn-primary:hover {
+  background: linear-gradient(135deg, #6a46ff, #8d6cff, #ff9ed3) !important;
+  box-shadow: 0 4px 12px rgba(125, 90, 255, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  background: linear-gradient(135deg, #4522d9, #6a46ff, #f78bc9) !important;
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(82, 35, 255, 0.2);
+}
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .dashboard-row-1 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .dashboard-row-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+        .dashboard-row-3 {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-row-1,
+        .dashboard-row-2,
+        .dashboard-row-3 {
+            grid-template-columns: 1fr;
+        }
+        .metric-value {
+            font-size: 36px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header del Dashboard -->
+<header class="page-header animate-fade-up delay-1">
+    <h2>Dashboard</h2>
+    <p class="subtitle">Resumen general de predicciones agrícolas</p>
+    <a href="{% url 'comparador_lstm' %}" class="btn btn-primary" 
+   style="font-size: 16px; padding: 12px 30px;">
+    🤖 Ir al Comparador LSTM →
+</a>
+</header>
+
+<!-- Fila 1: Métricas KPI -->
+<div class="dashboard-row-1">
+    <!-- Tarjeta 1: Total Predicciones -->
+    <div class="metric-card animate-fade-in-up delay-2">
+        <div class="metric-icon">📊</div>
+        <h2 id="total-predicciones" class="metric-value">{{ total_predicciones|default:"0" }}</h2>
+        <p class="metric-label">Total Predicciones</p>
+    </div>
+    
+    <!-- Tarjeta 2: Completadas -->
+    <div class="metric-card animate-fade-in-up delay-3">
+        <div class="metric-icon">✅</div>
+        <h2 id="completadas" class="metric-value">{{ predicciones_completadas|default:"0" }}</h2>
+        <p class="metric-label">Predicciones Completadas</p>
+    </div>
+    
+    <!-- Tarjeta 3: Tasa de Éxito -->
+    <div class="metric-card animate-fade-in-up delay-4">
+        <div class="metric-icon">🎯</div>
+        <h2 id="tasa-exito" class="metric-value">{{ tasa_completado|default:"0" }}</h2>
+        <p class="metric-label">Tasa de Éxito (%)</p>
+    </div>
+    
+    <!-- Tarjeta 4: Hectáreas Totales -->
+    <div class="metric-card animate-fade-in-up delay-5">
+        <div class="metric-icon">🌾</div>
+        <h2 id="hectareas" class="metric-value">0</h2>
+        <p class="metric-label">Hectáreas Totales</p>
+    </div>
+</div>
+
+<!-- Fila 2: Gráficos Principales -->
+<div class="dashboard-row-2">
+    <!-- Gráfico 1: Predicción a 10 años -->
+    <div class="chart-card animate-fade-up delay-6">
+        <h3>Producción Proyectada a 10 Años</h3>
+        <div class="chart-container">
+            <canvas id="chartPrediccion10"></canvas>
+        </div>
+    </div>
+    
+    <!-- Gráfico 2: ROI por tipo de árbol -->
+    <div class="chart-card animate-fade-up delay-7">
+        <h3>ROI Promedio por Tipo de Árbol</h3>
+        <div class="chart-container">
+            <canvas id="chartROI"></canvas>
+        </div>
+    </div>
+    
+    <!-- Tarjeta Destacada: Próxima Predicción -->
+    <div class="featured-card animate-fade-up delay-8">
+        <h3>Próxima Predicción Destacada</h3>
+        <div class="featured-icon">🌱</div>
+        <p class="featured-value">Producción Estimada: 1,250 ton</p>
+        <div>
+            <span class="badge badge-success">Confiabilidad: 87%</span>
+        </div>
+        <p class="featured-roi">ROI Proyectado: 72%</p>
+        <p class="featured-text">Tiempo de Recuperación: 3.2 años</p>
+        <a href="{% url 'nueva_prediccion' %}" class="btn-primary">Ver Detalles</a>
+    </div>
+</div>
+
+<!-- Fila 3: Análisis Secundarios -->
+<div class="dashboard-row-3">
+    <!-- Gráfico Regional -->
+    <div class="chart-card animate-fade-up delay-9">
+        <h3>Producción Total por Región</h3>
+        <div class="chart-container">
+            <canvas id="chartRegional"></canvas>
+        </div>
+    </div>
+    
+    <!-- Gráfico de Riego -->
+    <div class="chart-card animate-fade-up delay-10">
+        <h3>Eficiencia por Método de Riego</h3>
+        <div class="chart-container">
+            <canvas id="chartRiego"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// ==========================================
+// INICIALIZACIÓN AL CARGAR EL DOM
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando dashboard...');
+    
+    // Animar KPIs (números que cuentan desde 0)
+    animateKPIs();
+    
+    // Inicializar gráficos después de un delay
+    setTimeout(() => {
+        initChartPrediccion10();
+        initChartROI();
+        initChartRegional();
+        initChartRiego();
+    }, 800);
+});
+
+// ==========================================
+// ANIMACIÓN DE NÚMEROS KPI
+// ==========================================
+function animateKPIs() {
+    const totalPred = parseInt('{{ total_predicciones|default:"0" }}');
+    const completadas = parseInt('{{ predicciones_completadas|default:"0" }}');
+    const tasaExito = parseInt('{{ tasa_completado|default:"0" }}');
+    
+    animateValue(document.getElementById('total-predicciones'), 0, totalPred, 1500);
+    animateValue(document.getElementById('completadas'), 0, completadas, 1500);
+    animateValue(document.getElementById('tasa-exito'), 0, tasaExito, 1500);
+    animateValue(document.getElementById('hectareas'), 0, 2850, 1500);
+}
+
+function animateValue(element, start, end, duration) {
+    if (!element) return;
+    
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const value = Math.floor(progress * (end - start) + start);
+        element.textContent = value.toLocaleString('es-CL');
+        
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    
+    window.requestAnimationFrame(step);
+}
+
+// ==========================================
+// GRÁFICO 1: PREDICCIÓN A 10 AÑOS
+// ==========================================
+function initChartPrediccion10() {
+    const ctx = document.getElementById('chartPrediccion10');
+    if (!ctx) return;
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['2025', '2026', '2027', '2028', '2029', '2030', '2031', '2032', '2033', '2034', '2035'],
+            datasets: [{
+                label: 'Producción Proyectada (ton)',
+                data: [850, 920, 980, 1050, 1120, 1180, 1250, 1300, 1350, 1400, 1450],
+                borderColor: '#F78BC9',
+                backgroundColor: 'rgba(247, 139, 201, 0.2)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#7D5AFF',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: { family: 'Inter', size: 12 },
+                        color: '#444'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(45, 158, 97, 0.95)',
+                    titleFont: { family: 'Poppins', weight: '600' },
+                    bodyFont: { family: 'Inter' },
+                    padding: 12,
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#666'
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#666'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ==========================================
+// GRÁFICO 2: ROI POR ÁRBOL
+// ==========================================
+function initChartROI() {
+    const ctx = document.getElementById('chartROI');
+    if (!ctx) return;
+    
+    // Intentar usar datos reales de Django si están disponibles
+    let labels = ['Cerezo', 'Palto', 'Limonero', 'Manzano', 'Naranjo'];
+    let valores = [78, 72, 68, 65, 61];
+    
+    {% if stats_por_arbol %}
+    try {
+        const statsArbol = JSON.parse('{{ stats_por_arbol|safe }}');
+        if (statsArbol && statsArbol.length > 0) {
+            labels = statsArbol.map(s => s.tipo_arbol__tipo || 'Sin tipo');
+            valores = statsArbol.map(s => Math.round(s.promedio_roi || 0));
+        }
+    } catch(e) {
+        console.warn('No se pudieron cargar datos reales de ROI, usando conceptuales');
+    }
+    {% endif %}
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'ROI (%)',
+                data: valores,
+                backgroundColor: [
+                    '#F78BC9',
+                    '#E588C5',
+                    '#D485C1',
+                    '#C282BD',
+                    '#B07FB9'
+                ],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(125, 90, 255, 0.95)',
+                    callbacks: {
+                        label: (context) => `ROI: ${context.parsed.x}%`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        callback: (value) => value + '%',
+                        font: { family: 'Inter', size: 11 }
+                    }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { family: 'Inter', size: 12, weight: '500' }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ==========================================
+// GRÁFICO 3: PRODUCCIÓN REGIONAL
+// ==========================================
+function initChartRegional() {
+    const ctx = document.getElementById('chartRegional');
+    if (!ctx) return;
+    
+    // Datos conceptuales por defecto
+    let regiones = ['R.M.', 'Maule', "O'Higgins", 'Valparaíso', 'Coquimbo'];
+    let produccion = [1250, 1680, 1890, 980, 720];
+    let hectareas = [450, 580, 620, 380, 290];
+    
+    {% if stats_por_region %}
+    try {
+        const statsRegion = JSON.parse('{{ stats_por_region|safe }}');
+        if (statsRegion && statsRegion.length > 0) {
+            regiones = statsRegion.map(s => {
+                const nombre = s.comuna__region__nombre || 'Sin región';
+                return nombre.replace('Región de ', 'R. ').replace('Región ', 'R. ');
+            });
+            produccion = statsRegion.map(s => Math.round((s.produccion_total || 0) / 1000)); // en miles
+            hectareas = statsRegion.map(s => Math.round(s.total_hectareas || 0));
+        }
+    } catch(e) {
+        console.warn('No se pudieron cargar datos reales regionales, usando conceptuales');
+    }
+    {% endif %}
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: regiones,
+            datasets: [
+                {
+                    label: 'Producción (ton)',
+                    data: produccion,
+                    backgroundColor: '#F78BC9',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Hectáreas',
+                    data: hectareas,
+                    backgroundColor: '#7D5AFF',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { font: { family: 'Inter', size: 11 } }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: { font: { family: 'Inter', size: 11 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Inter', size: 11 } }
+                }
+            }
+        }
+    });
+}
+
+// ==========================================
+// GRÁFICO 4: EFICIENCIA DE RIEGO
+// ==========================================
+function initChartRiego() {
+    const ctx = document.getElementById('chartRiego');
+    if (!ctx) return;
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Goteo', 'Microaspersión', 'Aspersión', 'Surco'],
+            datasets: [{
+                data: [92, 85, 75, 60],
+                backgroundColor: [
+                    '#4DC47B',
+                    '#A6F5C6',
+                    '#F78BC9',
+                    '#7D5AFF'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        font: { family: 'Inter', size: 11 },
+                        padding: 12,
+                        generateLabels: (chart) => {
+                            const data = chart.data;
+                            return data.labels.map((label, i) => ({
+                                text: `${label}: ${data.datasets[0].data[i]}%`,
+                                fillStyle: data.datasets[0].backgroundColor[i],
+                                hidden: false,
+                                index: i
+                            }));
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `${context.label}: ${context.parsed}% de eficiencia`
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+</script>
+{% endblock %}

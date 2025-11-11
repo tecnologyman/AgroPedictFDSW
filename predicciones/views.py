@@ -1,0 +1,730 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db.models import Count, Avg, Sum, Q
+from django.conf import settings
+from openai import OpenAI
+from django.contrib.auth import get_user_model
+from .models import Prediccion, TipoArbol, Comuna, Region, DatoClimatico, AnalisisPrediccion
+from .forms import PrediccionForm, AnalisisPrediccionForm
+from .services.fastapi_client import ping as ms_ping, echo as ms_echo
+import os, json, requests
+from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+import numpy as np
+from sklearn.metrics import r2_score
+
+User = get_user_model()
+
+# ==========================================
+# CONFIGURACIÓN DE IA
+# ==========================================
+
+
+# ==========================================
+# VISTAS DE IA
+# ==========================================
+
+def ia_chat_page(request):
+    return render(request, "ia_chat.html")
+
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+def ia_consulta(request):
+    pregunta = request.GET.get("q") or request.POST.get("q")
+
+    if not pregunta:
+        return JsonResponse({"error": "Debe enviar parámetro 'q'."}, status=400)
+
+    try:
+        chat = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": pregunta}]
+        )
+        respuesta = chat.choices[0].message.content
+        return JsonResponse({"respuesta": respuesta})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+# ==========================================
+# FUNCIONES AUXILIARES
+# ==========================================
+
+def obtener_datos_clima(comuna):
+    """Obtiene datos climáticos (simulados)."""
+    try:
+        lat = comuna.latitud or -33.4489
+        lon = comuna.longitud or -70.6693
+        api_key = getattr(settings, 'ACCUWEATHER_API_KEY', 'demo_key')
+        return {
+            'temperatura': 18.5,
+            'humedad': 65,
+            'descripcion': 'Parcialmente nublado',
+            'icono': '02d'
+        }
+    except Exception:
+        return None
+
+# ==========================================
+# DASHBOARD PRINCIPAL
+# ==========================================
+
+def dashboard(request):
+    total_predicciones = Prediccion.objects.count()
+    predicciones_completadas = Prediccion.objects.filter(estado='completada').count()
+    predicciones_recientes = Prediccion.objects.select_related(
+        'tipo_arbol', 'comuna__region'
+    ).order_by('-fecha_creacion')[:5]
+
+    stats_por_arbol = list(Prediccion.objects.filter(
+        estado='completada'
+    ).values('tipo_arbol__tipo').annotate(
+        total=Count('id'),
+        promedio_produccion=Avg('produccion_por_hectarea'),
+        promedio_confiabilidad=Avg('confiabilidad'),
+        promedio_roi=Avg('roi_proyectado'),
+        promedio_agua=Avg('consumo_agua_por_hectarea')
+    ).order_by('-total')[:5])
+
+    # AGREGAR predicciones completadas para pestaña LSTM
+    predicciones_completadas_list = Prediccion.objects.filter(
+        estado='completada'
+    ).select_related('tipo_arbol', 'comuna')[:20]
+
+    stats_por_region = list(Prediccion.objects.filter(
+        estado='completada'
+    ).values('comuna__region__nombre').annotate(
+        total=Count('id'),
+        total_hectareas=Sum('hectareas'),
+        produccion_total=Sum('produccion_total'),
+        inversion_total=Sum('inversion_estimada')
+    ).order_by('-total')[:5])
+
+    santiago = Comuna.objects.filter(nombre__icontains='Santiago').first()
+    datos_clima = obtener_datos_clima(santiago) if santiago else None
+
+    context = {
+        'total_predicciones': total_predicciones,
+        'predicciones_completadas': predicciones_completadas,
+        'predicciones_recientes': predicciones_recientes,
+        'stats_por_arbol': json.dumps(stats_por_arbol),
+        'stats_por_region': json.dumps(stats_por_region),
+        'datos_clima': datos_clima,
+        'comuna_clima': santiago,
+        'tasa_completado': round(
+            (predicciones_completadas / total_predicciones * 100)
+            if total_predicciones > 0 else 0, 1
+        ),
+        'predicciones_completadas_list': predicciones_completadas_list,
+    }
+
+    return render(request, 'predicciones/dashboard.html', context)
+
+# ==========================================
+# PREDICCIONES
+# ==========================================
+
+def nueva_prediccion(request):
+    """Vista para crear una nueva predicción."""
+    if request.method == 'POST':
+        form = PrediccionForm(request.POST)
+        if form.is_valid():
+            prediccion = form.save(commit=False)
+            prediccion.usuario = User.objects.first()  # usuario genérico para demo
+            prediccion.estado = 'procesando'
+            prediccion.save()
+            prediccion.calcular_prediccion()
+            messages.success(request, 'Predicción creada exitosamente.')
+            return redirect('prediccion_detalle', pk=prediccion.pk)
+    else:
+        form = PrediccionForm()
+
+    context = {
+        'form': form,
+        'tipos_arboles': TipoArbol.objects.all(),
+        'comunas': Comuna.objects.select_related('region').all(),
+    }
+
+    return render(request, 'predicciones/prediccion_form.html', context)
+
+def prediccion_detalle(request, pk):
+    """Detalle de una predicción."""
+    prediccion = get_object_or_404(Prediccion, pk=pk)
+    analisis, created = AnalisisPrediccion.objects.get_or_create(
+        prediccion=prediccion,
+        defaults={
+            'categoria_rentabilidad': prediccion.get_rentabilidad_categoria(),
+            'recomendacion': generar_recomendacion_automatica(prediccion)
+        }
+    )
+
+    otras_especies = Prediccion.objects.filter(
+        comuna__region=prediccion.comuna.region,
+        estado='completada'
+    ).exclude(id=prediccion.id).values(
+        'tipo_arbol__tipo', 'tipo_arbol__id'
+    ).annotate(
+        promedio_roi=Avg('roi_proyectado'),
+        promedio_produccion=Avg('produccion_por_hectarea')
+    ).order_by('-promedio_roi')[:3]
+
+    context = {
+        'prediccion': prediccion,
+        'analisis': analisis,
+        'otras_especies': otras_especies,
+    }
+
+    return render(request, 'predicciones/prediccion_detalle.html', context)
+
+def lista_predicciones(request):
+    """Lista general de predicciones (público)."""
+    predicciones_list = Prediccion.objects.select_related(
+        'tipo_arbol', 'comuna__region'
+    ).order_by('-fecha_creacion')
+
+    tipo_arbol = request.GET.get('tipo_arbol')
+    estado = request.GET.get('estado')
+    region = request.GET.get('region')
+
+    if tipo_arbol:
+        predicciones_list = predicciones_list.filter(tipo_arbol__pk=tipo_arbol)
+    if estado:
+        predicciones_list = predicciones_list.filter(estado=estado)
+    if region:
+        predicciones_list = predicciones_list.filter(comuna__region__pk=region)
+
+    paginator = Paginator(predicciones_list, 10)
+    page_number = request.GET.get('page')
+    predicciones = paginator.get_page(page_number)
+
+    context = {
+        'predicciones': predicciones,
+        'tipos_arboles': TipoArbol.objects.all(),
+        'regiones': Region.objects.all(),
+        'estados': Prediccion.ESTADO_CHOICES,
+        'filtros': {'tipo_arbol': tipo_arbol, 'estado': estado, 'region': region}
+    }
+
+    return render(request, 'predicciones/prediccion_lista.html', context)
+
+# ==========================================
+# ANÁLISIS DE PREDICCIÓN
+# ==========================================
+
+def analisis_prediccion(request):
+    if request.method == 'POST':
+        form = AnalisisPrediccionForm(request.POST)
+        if form.is_valid():
+            prediccion_id = form.cleaned_data['prediccion'].id
+            return redirect('analisis_prediccion_detalle', pk=prediccion_id)
+    else:
+        form = AnalisisPrediccionForm()
+
+    predicciones = Prediccion.objects.filter(
+        estado='completada'
+    ).select_related('tipo_arbol', 'comuna').order_by('-fecha_creacion')[:10]
+
+    context = {
+    'form': form,
+    'predicciones': predicciones,
+}
+
+    return render(request, 'predicciones/analisis_prediccion.html', context)
+
+def analisis_prediccion_detalle(request, pk):
+    prediccion = get_object_or_404(Prediccion, pk=pk)
+
+    misma_especie_otras_regiones = Prediccion.objects.filter(
+        tipo_arbol=prediccion.tipo_arbol, estado='completada'
+    ).exclude(id=prediccion.id).values('comuna__region__nombre').annotate(
+        promedio_roi=Avg('roi_proyectado'),
+        promedio_produccion=Avg('produccion_por_hectarea'),
+        promedio_inversion=Avg('inversion_estimada')
+    ).order_by('-promedio_roi')
+
+    alternativas_region = Prediccion.objects.filter(
+        comuna__region=prediccion.comuna.region, estado='completada'
+    ).exclude(tipo_arbol=prediccion.tipo_arbol).values(
+        'tipo_arbol__tipo', 'tipo_arbol__id'
+    ).annotate(
+        promedio_roi=Avg('roi_proyectado'),
+        promedio_produccion=Avg('produccion_por_hectarea'),
+        total_predicciones=Count('id')
+    ).order_by('-promedio_roi')[:5]
+
+    analisis_riesgo = {
+        'roi_esperado': prediccion.roi_proyectado or 0,
+        'inversion_requerida': prediccion.inversion_estimada or 0,
+        'tiempo_recuperacion': calcular_tiempo_recuperacion(prediccion),
+        'categoria_riesgo': clasificar_riesgo_inversion(prediccion)
+    }
+
+    context = {
+        'prediccion': prediccion,
+        'misma_especie_otras_regiones': misma_especie_otras_regiones,
+        'alternativas_region': alternativas_region,
+        'analisis_riesgo': analisis_riesgo,
+    }
+
+    return render(request, 'predicciones/analisis_prediccion_detalle.html', context)
+
+def comparacion_predicciones(request):
+    """Comparación libre (sin restricción de usuario)."""
+    prediccion_ids = request.GET.getlist('predicciones')
+
+    if prediccion_ids:
+        predicciones = Prediccion.objects.filter(
+            id__in=prediccion_ids, estado='completada'
+        ).select_related('tipo_arbol', 'comuna__region')
+    else:
+        predicciones = Prediccion.objects.filter(
+            estado='completada'
+        ).select_related('tipo_arbol', 'comuna__region').order_by('-fecha_creacion')[:5]
+
+    comparacion_data = []
+    for p in predicciones:
+        comparacion_data.append({
+            'prediccion': p,
+            'roi_por_hectarea': (p.roi_proyectado or 0) / p.hectareas if p.hectareas else 0,
+            'inversion_por_hectarea': (p.inversion_estimada or 0) / p.hectareas if p.hectareas else 0,
+            'eficiencia_agua': (p.produccion_por_hectarea or 0) / (p.consumo_agua_por_hectarea or 1)
+        })
+
+    context = {
+        'comparacion_data': comparacion_data,
+        'todas_predicciones': Prediccion.objects.filter(estado='completada')
+    }
+
+    return render(request, 'predicciones/comparacion_predicciones.html', context)
+
+# ==========================================
+# API AUXILIAR
+# ==========================================
+
+def api_comunas_por_region(request):
+    region_id = request.GET.get('region_id')
+    comunas = Comuna.objects.filter(region_id=region_id).values('id', 'nombre') if region_id else []
+    return JsonResponse({'comunas': list(comunas)})
+
+def eliminar_prediccion(request, pk):
+    if request.method == 'POST':
+        prediccion = get_object_or_404(Prediccion, pk=pk)
+        prediccion.delete()
+        messages.success(request, 'Predicción eliminada exitosamente.')
+        return redirect('lista_predicciones')
+
+# ==========================================
+# FUNCIONES DE ANÁLISIS Y RIESGO
+# ==========================================
+
+def generar_recomendacion_automatica(prediccion):
+    roi = prediccion.roi_proyectado or 0
+    if roi >= 50:
+        return f"Excelente oportunidad: ROI {roi:.1f}%."
+    elif roi >= 30:
+        return f"Buena oportunidad: ROI {roi:.1f}%."
+    elif roi >= 15:
+        return f"Oportunidad moderada: ROI {roi:.1f}%."
+    elif roi >= 0:
+        return f"Retorno bajo: ROI {roi:.1f}%."
+    else:
+        return f"No recomendado: ROI negativo ({roi:.1f}%)."
+
+def calcular_tiempo_recuperacion(prediccion):
+    if not prediccion.inversion_estimada or not prediccion.produccion_por_hectarea:
+        return "No disponible"
+    
+    ingresos = (prediccion.produccion_por_hectarea *
+                prediccion.hectareas *
+                (prediccion.tipo_arbol.precio_promedio_ton or 0))
+    costos = (prediccion.tipo_arbol.costo_mantenimiento_anual * prediccion.hectareas)
+    ganancia = ingresos - costos
+    
+    if ganancia > 0:
+        return f"{prediccion.inversion_estimada / ganancia:.1f} años"
+    return "No se recupera"
+
+def clasificar_riesgo_inversion(prediccion):
+    roi = prediccion.roi_proyectado or 0
+    confiabilidad = prediccion.confiabilidad or 0
+    
+    if roi >= 30 and confiabilidad >= 85:
+        return "Bajo"
+    elif roi >= 15 and confiabilidad >= 75:
+        return "Medio"
+    elif roi >= 0 and confiabilidad >= 65:
+        return "Alto"
+    return "Muy Alto"
+
+# ==========================================
+# MICRO SERVICIOS
+# ==========================================
+
+def ms_ping_view(request):
+    try:
+        data = ms_ping()
+        return JsonResponse({"ok": True, "upstream": data})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=502)
+
+def ms_echo_view(request):
+    msg = request.GET.get("msg", "Hola desde Django")
+    try:
+        data = ms_echo(msg)
+        return JsonResponse({"ok": True, "sent": msg, "upstream": data})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=502)
+
+# ==========================================
+# CALCULADORAS AGRÍCOLAS
+# ==========================================
+
+def calculadoras_agricolas(request):
+    calculadoras = [
+        {'nombre': 'Fertilización NPK', 'descripcion': 'Cálculo NPK', 'icono': 'fas fa-leaf', 'url': 'calculadora_fertilizacion', 'categoria': 'Nutrición'},
+        {'nombre': 'Riego', 'descripcion': 'Cálculo lámina y frecuencia de riego', 'icono': 'fas fa-tint', 'url': 'calculadora_agua', 'categoria': 'Agua'},
+        {'nombre': 'ROI Agrícola', 'descripcion': 'Retorno y recuperación de inversión', 'icono': 'fas fa-chart-line', 'url': 'calculadora_roi', 'categoria': 'Economía'},
+        {'nombre': 'Densidad de Siembra', 'descripcion': 'Cantidad óptima de plantas', 'icono': 'fas fa-seedling', 'url': 'calculadora_siembra', 'categoria': 'Siembra'},
+        {'nombre': 'Balance Hídrico', 'descripcion': 'Balance entre precipitación y evapotranspiración', 'icono': 'fas fa-cloud-rain', 'url': 'calculadora_balance_hidrico', 'categoria': 'Agua'}
+    ]
+    return render(request, 'calculadoras/index.html', {'calculadoras': calculadoras})
+
+def calculadora_fertilizacion(request):
+    resultado = None
+    if request.method == 'POST':
+        rendimiento_esperado = float(request.POST.get('rendimiento_esperado', 0))
+        cultivo = request.POST.get('cultivo')
+        superficie = float(request.POST.get('superficie', 1))
+        nitrogeno_suelo = float(request.POST.get('nitrogeno_suelo', 0))
+        fosforo_suelo = float(request.POST.get('fosforo_suelo', 0))
+        potasio_suelo = float(request.POST.get('potasio_suelo', 0))
+        formula_npk = request.POST.get('formula_npk', '15-15-15').split('-')
+        
+        n_fert = float(formula_npk[0]) / 100
+        p_fert = float(formula_npk[1]) / 100
+        k_fert = float(formula_npk[2]) / 100
+        coef = {'N': 3.5, 'P2O5': 1.5, 'K2O': 5.5}
+        
+        extr_n = rendimiento_esperado * coef['N']
+        extr_p = rendimiento_esperado * coef['P2O5']
+        extr_k = rendimiento_esperado * coef['K2O']
+        
+        factor = 3900 / 1000000
+        disp_n = nitrogeno_suelo * factor
+        disp_p = fosforo_suelo * factor * 0.8
+        disp_k = potasio_suelo * factor * 0.9
+        
+        req_n = max(0, extr_n - disp_n)
+        req_p = max(0, extr_p - disp_p)
+        req_k = max(0, extr_k - disp_k)
+        
+        dosis = max(
+            req_n / n_fert if n_fert > 0 else 0,
+            req_p / p_fert if p_fert > 0 else 0,
+            req_k / k_fert if k_fert > 0 else 0
+        )
+        
+        resultado = {
+            'dosis_npk_ha': round(dosis, 1),
+            'dosis_total': round(dosis * superficie, 1)
+        }
+    
+    return render(request, 'calculadoras/fertilizacion.html', {'resultado': resultado})
+
+def calculadora_agua(request):
+    resultado = None
+    if request.method == 'POST':
+        et0 = float(request.POST.get('et0', 0))
+        kc = float(request.POST.get('kc', 1))
+        eficiencia = float(request.POST.get('eficiencia', 0.7))
+        frecuencia = int(request.POST.get('frecuencia', 7))
+        
+        lamina_diaria = et0 * kc
+        lamina_evento = lamina_diaria * frecuencia / eficiencia
+        volumen_evento = lamina_evento * 10
+        
+        resultado = {
+            'lamina_diaria': round(lamina_diaria, 1),
+            'lamina_evento': round(lamina_evento, 1),
+            'volumen_evento': round(volumen_evento, 1)
+        }
+    
+    return render(request, 'calculadoras/agua.html', {'resultado': resultado})
+
+def calculadora_roi(request):
+    resultado = None
+    if request.method == 'POST':
+        inversion = float(request.POST.get('inversion', 0))
+        beneficio = float(request.POST.get('beneficio_anual', 0))
+        
+        roi = (beneficio / inversion) * 100 if inversion > 0 else 0
+        payback = inversion / beneficio if beneficio > 0 else None
+        
+        resultado = {
+            'roi': round(roi, 1),
+            'payback': round(payback, 1) if payback else None
+        }
+    
+    return render(request, 'calculadoras/roi.html', {'resultado': resultado})
+
+def calculadora_siembra(request):
+    resultado = None
+    if request.method == 'POST':
+        densidad = float(request.POST.get('densidad_planta', 3000))
+        supervivencia = float(request.POST.get('supervivencia', 0.9))
+        plantas = densidad / supervivencia
+        resultado = {'plantas_necesarias': int(round(plantas, 0))}
+    
+    return render(request, 'calculadoras/siembra.html', {'resultado': resultado})
+
+def calculadora_balance_hidrico(request):
+    resultado = None
+    if request.method == 'POST':
+        precipitacion = float(request.POST.get('precipitacion', 0))
+        etc = float(request.POST.get('etc', 0))
+        infiltracion = float(request.POST.get('infiltracion', 0))
+        balance = precipitacion - etc - infiltracion
+        resultado = {'balance': round(balance, 1)}
+    
+    return render(request, 'calculadoras/balance_hidrico.html', {'resultado': resultado})
+
+@require_http_methods(["GET"])
+def loading_prediccion(request):
+    """Página de loading con árbol creciendo"""
+    return render(request, 'loading_prediccion.html')
+
+# ==========================================
+# LSTM COMPARADOR - NUEVAS FUNCIONES
+# ==========================================
+
+from django.contrib.auth.decorators import login_required
+
+def comparador_predicciones_lstm(request, prediccion_id):
+    """Vista principal del comparador LSTM."""
+    try:
+        prediccion = get_object_or_404(Prediccion, id=prediccion_id)
+    except:
+        prediccion = None
+
+    if not prediccion:
+        return JsonResponse({'success': False, 'error': 'Predicción no encontrada'}, status=404)
+
+    try:
+        from .models import PrediccionLSTM, DatosPredioHistorico, ModeloLSTM
+        
+        modelo_lstm, _ = ModeloLSTM.objects.get_or_create(
+            nombre="LSTM Principal",
+            defaults={'version': '1.0'}
+        )
+
+        pred_lstm, created = PrediccionLSTM.objects.get_or_create(
+            prediccion_original=prediccion,
+            defaults={'modelo': modelo_lstm}
+        )
+
+        datos_historicos = DatosPredioHistorico.objects.filter(
+            prediccion=prediccion
+        ).order_by('ano')
+
+        context = {
+            'prediccion': prediccion,
+            'pred_lstm': pred_lstm,
+            'modelo_lstm': modelo_lstm,
+            'datos_historicos': datos_historicos,
+            'tiene_calibracion': pred_lstm.tiene_datos_historicos,
+            'r2_calibracion': pred_lstm.r2_calibracion,
+            'sesgo_correccion': pred_lstm.sesgo_correccion,
+        }
+
+        return render(request, 'predicciones/comparador_predicciones.html', context)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+
+@require_http_methods(["POST"])
+def api_generar_prediccion_lstm(request):
+    """API para generar predicción LSTM con parámetros ajustables."""
+    try:
+        from .models import PrediccionLSTM, ModeloLSTM
+        from .services.lstm_predictor import LSTMPredictor
+        
+        data = json.loads(request.body)
+        prediccion_id = data.get('prediccion_id')
+        trend_shift = float(data.get('trend_shift', 1.05))
+        noise_level = float(data.get('noise_level', 0.15))
+
+        prediccion = get_object_or_404(Prediccion, id=prediccion_id)
+        pred_lstm, created = PrediccionLSTM.objects.get_or_create(
+    prediccion_original=prediccion,
+    defaults={
+        'modelo_id': 1,  # Primer modelo disponible
+        'estado': 'pendiente',
+    }
+)
+
+        predicciones = LSTMPredictor.predecir_multiples_anos(
+            anos=10,
+            trend_shift=trend_shift,
+            noise_level=noise_level
+        )
+
+        pred_lstm.rendimiento_predicho_ano_actual = predicciones[0]['rendimiento']
+        pred_lstm.predicciones_10_anos = {
+            'datos': predicciones,
+            'parametros': {
+                'trend_shift': trend_shift,
+                'noise_level': noise_level
+            }
+        }
+        pred_lstm.estado = 'completada'
+        pred_lstm.save()
+
+        return JsonResponse({
+            'success': True,
+            'predicciones': predicciones,
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+
+@require_http_methods(["POST"])
+def api_ingresar_datos_historicos(request):
+    """API para ingresar datos históricos y calibrar modelo."""
+
+    
+
+    try:
+        from .models import PrediccionLSTM, DatosPredioHistorico
+        if not request.user.is_authenticated:
+            return JsonResponse({
+            'success': False,
+            'message': '⚠️ Esta función es solo para usuarios registrados. Y esto es solo una demo :p',
+            'type': 'warning'
+        }, status=403)
+        
+        data = json.loads(request.body)
+        prediccion_id = data.get('prediccion_id')
+        datos = data.get('datos_historicos', [])
+
+        prediccion = get_object_or_404(Prediccion, id=prediccion_id)
+        pred_lstm = PrediccionLSTM.objects.get(prediccion_original=prediccion)
+
+        for item in datos:
+            DatosPredioHistorico.objects.update_or_create(
+                usuario=request.user,
+                prediccion=prediccion,
+                ano=item['ano'],
+                defaults={
+                    'rendimiento_real': item['rendimiento_real'],
+                }
+            )
+
+        datos_hist = list(DatosPredioHistorico.objects.filter(
+            prediccion=prediccion
+        ).values('ano', 'rendimiento_real').order_by('ano'))
+
+        r2 = None
+        sesgo = None
+
+        if len(datos_hist) >= 2 and pred_lstm.predicciones_10_anos:
+            pred_dict = {
+                p['ano']: p['rendimiento']
+                for p in pred_lstm.predicciones_10_anos.get('datos', [])
+            }
+
+            y_real = np.array([d['rendimiento_real'] for d in datos_hist])
+            y_pred = np.array([pred_dict.get(d['ano'], np.nan) for d in datos_hist])
+
+            valid = ~np.isnan(y_pred)
+
+            if valid.sum() >= 2:
+                try:
+                    r2 = float(r2_score(y_real[valid], y_pred[valid]))
+                    sesgo = float(np.mean(y_real[valid] - y_pred[valid]))
+                except:
+                    r2 = None
+                    sesgo = None
+
+        pred_lstm.r2_calibracion = r2
+        pred_lstm.sesgo_correccion = sesgo
+        pred_lstm.tiene_datos_historicos = True
+        pred_lstm.save()
+
+        return JsonResponse({
+            'success': True,
+            'datos_guardados': len(datos),
+            'r2': r2,
+            'sesgo': sesgo
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+
+def api_datos_grafico(request, prediccion_id):
+    """API para obtener datos del gráfico."""
+    try:
+        from .models import PrediccionLSTM, DatosPredioHistorico
+        
+        prediccion = get_object_or_404(Prediccion, id=prediccion_id)
+        pred_lstm = PrediccionLSTM.objects.get(prediccion_original=prediccion)
+
+        datos_hist = list(DatosPredioHistorico.objects.filter(
+            prediccion=prediccion
+        ).values('ano', 'rendimiento_real').order_by('ano'))
+
+        datos_pred = pred_lstm.predicciones_10_anos.get('datos', [])
+
+        predicciones_formateadas = [
+            {
+                'ano': p['ano'],
+                'rendimiento': p['rendimiento'],
+            }
+            for p in datos_pred if p.get('success', True)
+        ]
+
+        return JsonResponse({
+            'success': True,
+            'historico': datos_hist,
+            'predicciones': predicciones_formateadas,
+            'calibracion': {
+                'r2': pred_lstm.r2_calibracion,
+                'sesgo': pred_lstm.sesgo_correccion,
+                'tiene_datos': pred_lstm.tiene_datos_historicos
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+    
+
+def comparador_lstm_page(request):
+    predicciones_completadas_list = Prediccion.objects.filter(
+        estado='completada'
+    ).select_related('tipo_arbol', 'comuna')[:20]
+    
+    return render(request, 'predicciones/comparador_lstm.html', {
+        'predicciones_completadas_list': predicciones_completadas_list,
+    })
+
+from django.contrib.auth.decorators import login_required
+
+

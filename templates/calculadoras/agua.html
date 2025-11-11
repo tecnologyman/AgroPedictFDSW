@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora de Riego - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-header-info h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #999999;
+    }
+    
+    .breadcrumb a {
+        color: #7D5AFF;
+        text-decoration: none;
+    }
+    
+    .btn-volver {
+        background: #F2F2F2;
+        color: #2A2A2A;
+        padding: 10px 20px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-volver:hover {
+        background: #EAEAEA;
+    }
+    
+    .container-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+    
+    .card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F78BC9;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #444444;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-hint {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #999999;
+        margin-bottom: 6px;
+        font-style: italic;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #2A2A2A;
+        background: #FFFFFF;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #7D5AFF;
+        box-shadow: 0 0 0 3px rgba(125, 90, 255, 0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    .btn-calcular {
+        width: 100%;
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 12px;
+    }
+    
+    .btn-calcular:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .results-section {
+        display: none;
+    }
+    
+    .results-section.show {
+        display: block;
+    }
+    
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    
+    .result-item {
+        background: linear-gradient(135deg, rgba(247, 139, 201, 0.05), rgba(125, 90, 255, 0.05));
+        border: 1px solid #F78BC9;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .result-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #999999;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    
+    .result-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: #7D5AFF;
+    }
+    
+    .result-unit {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: #666666;
+        margin-top: 4px;
+    }
+    
+    .info-box {
+        background: rgba(77, 196, 123, 0.08);
+        border-left: 4px solid #4DC47B;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    
+    .info-box h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #2D9E61;
+        margin-bottom: 8px;
+    }
+    
+    .info-box p {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .info-box ul {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        margin: 8px 0 0 20px;
+        padding: 0;
+    }
+    
+    .info-box li {
+        margin-bottom: 4px;
+    }
+    
+    @media (max-width: 1024px) {
+        .container-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .results-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header animate-fade-up delay-1">
+    <div class="page-header-info">
+        <h2>💧 Calculadora de Riego</h2>
+        <p class="breadcrumb"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a> / Calculadora de Riego</p>
+    </div>
+    <a href="{% url 'calculadoras_agricolas' %}" class="btn-volver">← Volver</a>
+</div>
+
+<div class="container-layout">
+    <!-- Columna Izquierda: Formulario -->
+    <div class="animate-fade-up delay-2">
+        <div class="card">
+            <h3 class="card-title">📊 Datos de Entrada</h3>
+            
+            <form id="riegoForm" method="POST">
+                {% csrf_token %}
+                
+                <!-- Sección 1: ETo -->
+                <div class="form-group">
+                    <label class="form-label">ET₀ - Evapotranspiración de Referencia (mm/día)</label>
+                    <div class="form-hint">Dato disponible en estaciones meteorológicas o CNR</div>
+                    <input type="number" name="eto" class="form-control" step="0.1" placeholder="ej. 5.3" required>
+                </div>
+                
+                <!-- Sección 2: Kc y Eficiencia -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Coeficiente de Cultivo (Kc)</label>
+                        <div class="form-hint">Varía según la fenología</div>
+                        <select name="kc" class="form-control" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option value="0.7">0.7 - Media Temporal</option>
+                            <option value="1.0">1.0 - Máxima Temporal</option>
+                            <option value="1.2">1.2 - Media Frutales</option>
+                            <option value="1.0">1.0 - Máxima Frutales</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Eficiencia del Sistema (%)</label>
+                        <div class="form-hint">70% = Aspersión</div>
+                        <select name="eficiencia" class="form-control" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option value="70">70% - Aspersión</option>
+                            <option value="85">85% - Goteo</option>
+                            <option value="60">60% - Inundación</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Sección 3: Frecuencia -->
+                <div class="form-group">
+                    <label class="form-label">Frecuencia de Riego (días)</label>
+                    <div class="form-hint">Días entre cada evento de riego</div>
+                    <input type="number" name="frecuencia" class="form-control" step="1" value="7" placeholder="ej. 7" required>
+                </div>
+                
+                <button type="submit" class="btn-calcular">📈 Calcular Lámina de Riego</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Columna Derecha: Información -->
+    <div class="animate-fade-up delay-3">
+        <div class="card">
+            <h3 class="card-title">ℹ️ Guía de Uso</h3>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>📋 ¿Cómo usar esta calculadora?</h4>
+                <p>
+                    Ingresa los parámetros del cultivo y las condiciones climáticas. 
+                    La calculadora determinará la lámina de riego diaria requerida.
+                </p>
+            </div>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>💡 Parámetros Comunes</h4>
+                <ul>
+                    <li><strong>Cerezo:</strong> Kc = 1.0-1.2</li>
+                    <li><strong>Manzano:</strong> Kc = 0.9-1.1</li>
+                    <li><strong>Palto:</strong> Kc = 0.8-1.0</li>
+                    <li><strong>Viña:</strong> Kc = 0.7-0.9</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>⚠️ Recomendaciones</h4>
+                <ul>
+                    <li>Ajustar frecuencia según tipo de suelo</li>
+                    <li>Monitorear humedad del suelo regularmente</li>
+                    <li>Considerar precipitaciones en el período</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resultados -->
+<div id="resultadosSection" class="results-section animate-fade-up delay-4">
+    <div class="card">
+        <h3 class="card-title">✅ Resultados del Cálculo</h3>
+        
+        <div class="results-grid">
+            <div class="result-item">
+                <div class="result-label">Lámina Diaria</div>
+                <div class="result-value" id="resultLaminaDiaria">-</div>
+                <div class="result-unit">mm/día</div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Lámina por Evento</div>
+                <div class="result-value" id="resultLaminaEvento">-</div>
+                <div class="result-unit">mm</div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Volumen por Hectárea</div>
+                <div class="result-value" id="resultVolumen">-</div>
+                <div class="result-unit">m³/ha</div>
+            </div>
+        </div>
+        
+        <div class="info-box" style="margin-top: 24px;">
+            <h4>💡 Interpretación</h4>
+            <p id="interpretacion">Los resultados mostrarán la cantidad de agua necesaria para mantener óptimas condiciones hídricas en el cultivo.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('riegoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const eto = parseFloat(document.querySelector('input[name="eto"]').value);
+    const kc = parseFloat(document.querySelector('select[name="kc"]').value);
+    const eficiencia = parseFloat(document.querySelector('select[name="eficiencia"]').value);
+    const frecuencia = parseInt(document.querySelector('input[name="frecuencia"]').value);
+    
+    // Cálculos
+    const etcDiaria = eto * kc;
+    const laminaDiaria = etcDiaria / (eficiencia / 100);
+    const laminaEvento = laminaDiaria * frecuencia;
+    const volumen = laminaEvento * 10; // 1 mm = 10 m³/ha
+    
+    // Mostrar resultados
+    document.getElementById('resultLaminaDiaria').textContent = laminaDiaria.toFixed(2);
+    document.getElementById('resultLaminaEvento').textContent = laminaEvento.toFixed(2);
+    document.getElementById('resultVolumen').textContent = volumen.toFixed(0);
+    
+    document.getElementById('resultadosSection').classList.add('show');
+});
+</script>
+
+{% endblock %}

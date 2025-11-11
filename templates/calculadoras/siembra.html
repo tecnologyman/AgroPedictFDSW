@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora de Siembra - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-header-info h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #999999;
+    }
+    
+    .breadcrumb a {
+        color: #7D5AFF;
+        text-decoration: none;
+    }
+    
+    .btn-volver {
+        background: #F2F2F2;
+        color: #2A2A2A;
+        padding: 10px 20px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-volver:hover {
+        background: #EAEAEA;
+    }
+    
+    .container-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+    
+    .card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F78BC9;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #444444;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-hint {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #999999;
+        margin-bottom: 6px;
+        font-style: italic;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #2A2A2A;
+        background: #FFFFFF;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #7D5AFF;
+        box-shadow: 0 0 0 3px rgba(125, 90, 255, 0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    .btn-calcular {
+        width: 100%;
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 12px;
+    }
+    
+    .btn-calcular:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .results-section {
+        display: none;
+    }
+    
+    .results-section.show {
+        display: block;
+    }
+    
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    
+    .result-item {
+        background: linear-gradient(135deg, rgba(247, 139, 201, 0.05), rgba(125, 90, 255, 0.05));
+        border: 1px solid #F78BC9;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .result-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #999999;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    
+    .result-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: #7D5AFF;
+    }
+    
+    .result-unit {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: #666666;
+        margin-top: 4px;
+    }
+    
+    .info-box {
+        background: rgba(77, 196, 123, 0.08);
+        border-left: 4px solid #4DC47B;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    
+    .info-box h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #2D9E61;
+        margin-bottom: 8px;
+    }
+    
+    .info-box p {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .info-box ul {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        margin: 8px 0 0 20px;
+        padding: 0;
+    }
+    
+    .info-box li {
+        margin-bottom: 4px;
+    }
+    
+    @media (max-width: 1024px) {
+        .container-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .results-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header animate-fade-up delay-1">
+    <div class="page-header-info">
+        <h2>🌱 Calculadora de Densidad de Siembra</h2>
+        <p class="breadcrumb"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a> / Siembra</p>
+    </div>
+    <a href="{% url 'calculadoras_agricolas' %}" class="btn-volver">← Volver</a>
+</div>
+
+<div class="container-layout">
+    <!-- Columna Izquierda: Formulario -->
+    <div class="animate-fade-up delay-2">
+        <div class="card">
+            <h3 class="card-title">📊 Datos de Entrada</h3>
+            
+            <form id="siembraForm" method="POST">
+                {% csrf_token %}
+                
+                <!-- Sección 1: Densidad Objetivo -->
+                <div class="form-group">
+                    <label class="form-label">Densidad Objetivo (plantas/ha)</label>
+                    <div class="form-hint">Cantidad de plantas que desea establecer por hectárea</div>
+                    <input type="number" name="densidad" class="form-control" step="1" placeholder="ej. 400" required>
+                </div>
+                
+                <!-- Sección 2: Tasa de Supervivencia -->
+                <div class="form-group">
+                    <label class="form-label">Tasa de Supervivencia (%)</label>
+                    <div class="form-hint">Porcentaje esperado de plantas que sobrevivirán</div>
+                    <select name="supervivencia" class="form-control" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option value="70">70% - Baja</option>
+                        <option value="80">80% - Media</option>
+                        <option value="85">85% - Buena</option>
+                        <option value="90">90% - Muy Buena</option>
+                        <option value="95">95% - Óptima</option>
+                    </select>
+                </div>
+                
+                <!-- Sección 3: Especie -->
+                <div class="form-group">
+                    <label class="form-label">Especie o Cultivo</label>
+                    <div class="form-hint">Seleccione la especie para valores referenciales</div>
+                    <select name="especie" class="form-control" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option value="cerezo">Cerezo (350-450 plantas/ha)</option>
+                        <option value="manzano">Manzano (400-600 plantas/ha)</option>
+                        <option value="palta">Palta (200-300 plantas/ha)</option>
+                        <option value="vid">Vid (3000-5000 plantas/ha)</option>
+                        <option value="olivo">Olivo (150-200 plantas/ha)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-calcular">📈 Calcular Plantas Necesarias</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Columna Derecha: Información -->
+    <div class="animate-fade-up delay-3">
+        <div class="card">
+            <h3 class="card-title">ℹ️ Guía de Uso</h3>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>📋 ¿Cómo usar esta calculadora?</h4>
+                <p>
+                    Ingresa la densidad de plantas que deseas establecer, la tasa de supervivencia esperada 
+                    y la especie. La calculadora determinará cuántas plantas necesitas sembrar.
+                </p>
+            </div>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>💡 Fórmula Utilizada</h4>
+                <p>
+                    Plantas a Sembrar = Densidad Objetivo / (Supervivencia / 100)<br>
+                    <span style="font-size: 12px; margin-top: 4px; display: block;">Ajusta la cantidad inicial según pérdidas esperadas</span>
+                </p>
+            </div>
+            
+            <div class="info-box">
+                <h4>⚠️ Recomendaciones</h4>
+                <ul>
+                    <li>Aumentar densidad si se espera baja supervivencia</li>
+                    <li>Considerar plagas y enfermedades locales</li>
+                    <li>Usar plantas certificadas de buena calidad</li>
+                    <li>Preparar bien el suelo previo a la siembra</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resultados -->
+<div id="resultadosSection" class="results-section animate-fade-up delay-4">
+    <div class="card">
+        <h3 class="card-title">✅ Resultados del Cálculo</h3>
+        
+        <div class="results-grid">
+            <div class="result-item">
+                <div class="result-label">Plantas a Sembrar</div>
+                <div class="result-value" id="resultPlantas">-</div>
+                <div class="result-unit">plantas/ha</div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Para 1 Hectárea</div>
+                <div class="result-value" id="resultTotal">-</div>
+                <div class="result-unit">plantas</div>
+            </div>
+        </div>
+        
+        <div class="info-box" style="margin-top: 24px;">
+            <h4>💡 Interpretación</h4>
+            <p id="interpretacion">Esta es la cantidad de plantas que debe sembrar considerando las pérdidas esperadas durante el período de establecimiento.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('siembraForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const densidad = parseFloat(document.querySelector('input[name="densidad"]').value);
+    const supervivencia = parseFloat(document.querySelector('select[name="supervivencia"]').value);
+    
+    // Cálculo
+    const plantasAembro = Math.ceil(densidad / (supervivencia / 100));
+    
+    // Mostrar resultados
+    document.getElementById('resultPlantas').textContent = plantasAembro.toLocaleString();
+    document.getElementById('resultTotal').textContent = plantasAembro.toLocaleString();
+    
+    document.getElementById('resultadosSection').classList.add('show');
+});
+</script>
+
+{% endblock %}

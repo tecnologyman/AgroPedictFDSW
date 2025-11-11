@@ -1,0 +1,581 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Predicción #{{ prediccion.id }} - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-header-info h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .header-buttons {
+        display: flex;
+        gap: 12px;
+    }
+    
+    .btn-header {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    
+    .btn-volver {
+        background: #F2F2F2;
+        color: #2A2A2A;
+        border: 1px solid #E6E6E6;
+    }
+    
+    .btn-volver:hover {
+        background: #EAEAEA;
+    }
+    
+    .btn-nueva {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+    }
+    
+    .btn-nueva:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .prediccion-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .info-card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F78BC9;
+    }
+    
+    .info-group {
+        margin-bottom: 16px;
+    }
+    
+    .info-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: #999999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    
+    .info-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2A2A2A;
+    }
+    
+    .info-value.highlight {
+        color: #7D5AFF;
+        font-size: 18px;
+    }
+    
+    .badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(77, 196, 123, 0.1);
+        color: #2D9E61;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #4DC47B;
+        margin-top: 8px;
+    }
+    
+    .results-card {
+        background: linear-gradient(135deg, rgba(247, 139, 201, 0.05), rgba(125, 90, 255, 0.05));
+        border: 2px solid #F78BC9;
+        border-radius: 14px;
+        padding: 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .results-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .result-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .result-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+    
+    .result-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: #666666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+    }
+    
+    .result-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: #7D5AFF;
+    }
+    
+    .result-unit {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: #999999;
+        margin-top: 2px;
+    }
+    
+    .analysis-card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+    }
+    
+    .analysis-section {
+        margin-bottom: 20px;
+    }
+    
+    .analysis-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #E6E6E6;
+    }
+    
+    .factor-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .factor-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #444444;
+        line-height: 1.5;
+    }
+    
+    .factor-item::before {
+        content: "✓";
+        color: #4DC47B;
+        font-weight: 700;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+    
+    .recommendations-box {
+        background: rgba(77, 196, 123, 0.08);
+        border-left: 4px solid #4DC47B;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
+    
+    .recommendations-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2D9E61;
+        margin-bottom: 8px;
+    }
+    
+    .recommendations-text {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #2D9E61;
+        line-height: 1.6;
+    }
+    
+    .error-card {
+        background: rgba(255, 84, 89, 0.08);
+        border: 2px solid #FF5459;
+        border-radius: 14px;
+        padding: 24px;
+        text-align: center;
+    }
+    
+    .error-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+    
+    .error-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #C72C2C;
+        margin-bottom: 8px;
+    }
+    
+    .error-text {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #C72C2C;
+        margin-bottom: 16px;
+    }
+    
+    .error-btn {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .error-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .processing-card {
+        background: rgba(247, 139, 201, 0.08);
+        border: 2px dashed #F78BC9;
+        border-radius: 14px;
+        padding: 32px 24px;
+        text-align: center;
+    }
+    
+    .processing-spinner {
+        font-size: 48px;
+        margin-bottom: 16px;
+        animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .processing-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #F78BC9;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+    
+    .btn-accion {
+        flex: 1;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        text-align: center;
+    }
+    
+    .btn-ver {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+    }
+    
+    .btn-ver:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .btn-eliminar {
+        background: #FFE6E6;
+        color: #C72C2C;
+        border: 1px solid #FF5459;
+    }
+    
+    .btn-eliminar:hover {
+        background: #FFD6D6;
+    }
+    
+    @media (max-width: 1024px) {
+        .prediccion-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .results-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .header-buttons {
+            width: 100%;
+        }
+        
+        .btn-header {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header animate-fade-up delay-1">
+    <div class="page-header-info">
+        <h2>Predicción #{{ prediccion.id }}</h2>
+        <p>{{ prediccion.tipo_arbol.tipo }} en {{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}</p>
+    </div>
+    <div class="header-buttons">
+        <a href="{% url 'lista_predicciones' %}" class="btn-header btn-volver">← Volver al Historial</a>
+        <a href="{% url 'nueva_prediccion' %}" class="btn-header btn-nueva">➕ Nueva Predicción</a>
+    </div>
+</div>
+
+<!-- Contenido Según Estado -->
+{% if prediccion.estado == "completada" %}
+    <!-- Layout de Predicción Completada -->
+    <div class="prediccion-layout">
+        <!-- Columna Izquierda: Información del Cultivo -->
+        <div class="animate-fade-up delay-2">
+            <!-- Tarjeta: Información del Cultivo -->
+            <div class="info-card">
+                <h3 class="card-title">🌱 Información del Cultivo</h3>
+                
+                <div class="info-group">
+                    <span class="info-label">Tipo de Árbol</span>
+                    <span class="info-value">{{ prediccion.tipo_arbol.tipo }}</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Ubicación</span>
+                    <span class="info-value">{{ prediccion.comuna.nombre }}</span>
+                    <span class="info-value" style="font-size: 14px; color: #666666; font-weight: 400;">{{ prediccion.comuna.region.nombre }}</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Hectáreas</span>
+                    <span class="info-value">{{ prediccion.hectareas|floatformat:1 }} ha</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Edad de Árboles</span>
+                    <span class="info-value">{{ prediccion.edad_arboles }} años</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Densidad</span>
+                    <span class="info-value">{{ prediccion.densidad|floatformat:0 }} árb/ha</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Estado</span>
+                    <div class="badge-status">✓ Completada</div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta: Condiciones del Cultivo -->
+            <div class="info-card" style="margin-top: 24px;">
+                <h3 class="card-title">⚙️ Condiciones del Cultivo</h3>
+                
+                <div class="info-group">
+                    <span class="info-label">Tipo de Riego</span>
+                    <span class="info-value">{{ prediccion.tipo_riego }}</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Tipo de Suelo</span>
+                    <span class="info-value">{{ prediccion.tipo_suelo }}</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Fertilización</span>
+                    <span class="info-value">{{ prediccion.fertilizacion|capfirst }}</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Fecha de Creación</span>
+                    <span class="info-value">{{ prediccion.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Columna Derecha: Resultados -->
+        <div class="animate-fade-up delay-3">
+            <!-- Tarjeta: Resultados Principales -->
+            <div class="results-card">
+                <div class="results-grid">
+                    <div class="result-item">
+                        <span class="result-icon">📊</span>
+                        <span class="result-label">Producción por Hectárea</span>
+                        <span class="result-value">{{ prediccion.produccion_por_hectarea|floatformat:2 }}</span>
+                        <span class="result-unit">Ton/Ha</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-icon">📈</span>
+                        <span class="result-label">Producción Total</span>
+                        <span class="result-value">{{ prediccion.produccion_total|floatformat:2 }}</span>
+                        <span class="result-unit">Ton</span>
+                    </div>
+                    
+                    <div class="result-item">
+                        <span class="result-icon">🎯</span>
+                        <span class="result-label">Confiabilidad</span>
+                        <span class="result-value">{{ prediccion.confiabilidad }}</span>
+                        <span class="result-unit">%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tarjeta: Análisis de la Predicción -->
+            <div class="analysis-card" style="margin-top: 24px;">
+                <h3 class="card-title" style="border-bottom-color: #4DC47B;">✅ Análisis de la Predicción</h3>
+                
+                <div class="analysis-section">
+                    <h4 class="section-title">Factores Positivos</h4>
+                    <div class="factor-list">
+                        {% if prediccion.confiabilidad >= 85 %}
+                            <div class="factor-item">Riego optimizado con {{ prediccion.tipo_riego }}</div>
+                            <div class="factor-item">Árboles en edad óptima de producción ({{ prediccion.edad_arboles }} años)</div>
+                        {% else %}
+                            <div class="factor-item">Condiciones generales favorables</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="analysis-section">
+                    <h4 class="section-title">Factores a Considerar</h4>
+                    <div class="factor-list">
+                        {% if prediccion.confiabilidad < 85 %}
+                            <div class="factor-item">Validar datos de entrada para mayor precisión</div>
+                        {% endif %}
+                        <div class="factor-item">Monitoreo continuo recomendado</div>
+                        <div class="factor-item">Ajustes estacionales pueden aplicar</div>
+                    </div>
+                </div>
+                
+                <div class="recommendations-box">
+                    <h4 class="recommendations-title">💡 Recomendaciones</h4>
+                    <p class="recommendations-text">
+                        Basándose en los parámetros ingresados, se estima una producción de 
+                        <strong>{{ prediccion.produccion_por_hectarea|floatformat:2 }} toneladas por hectárea</strong>. 
+                        El nivel de confiabilidad de <strong>{{ prediccion.confiabilidad }}%</strong>
+                        {% if prediccion.confiabilidad >= 85 %}
+                            indica una predicción muy confiable.
+                        {% elif prediccion.confiabilidad >= 75 %}
+                            indica una predicción confiable.
+                        {% else %}
+                            indica que existen factores de incertidumbre a considerar.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botones de Acción -->
+    <div class="action-buttons animate-fade-up delay-4">
+        <a href="{% url 'lista_predicciones' %}" class="btn-accion btn-ver">Volver al Historial</a>
+        <form method="POST" action="{% url 'eliminar_prediccion' prediccion.pk %}" style="margin: 0; flex: 1;">
+            {% csrf_token %}
+            <button type="submit" class="btn-accion btn-eliminar" style="width: 100%;" onclick="return confirm('¿Eliminar esta predicción?');">🗑️ Eliminar Predicción</button>
+        </form>
+    </div>
+
+{% elif prediccion.estado == "pendiente" %}
+    <!-- Estado: Procesando -->
+    <div class="processing-card animate-fade-up delay-2">
+        <div class="processing-spinner">⏳</div>
+        <h3 class="processing-title">La predicción está siendo procesada</h3>
+        <p style="color: #F78BC9; margin-top: 8px; font-family: 'Inter', sans-serif; font-size: 14px;">
+            Actualice la página en unos momentos
+        </p>
+    </div>
+
+{% else %}
+    <!-- Estado: Error -->
+    <div class="error-card animate-fade-up delay-2">
+        <div class="error-icon">❌</div>
+        <h3 class="error-title">Error en la Predicción</h3>
+        <p class="error-text">
+            Hubo un error al procesar esta predicción. Por favor, intente crear una nueva predicción.
+        </p>
+        <a href="{% url 'nueva_prediccion' %}" class="error-btn">➕ Nueva Predicción</a>
+    </div>
+{% endif %}
+
+{% endblock %}

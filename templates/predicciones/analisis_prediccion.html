@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Análisis de Predicción - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+    }
+    
+    .page-header h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 32px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header .subtitle {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .container-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F78BC9;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: #444444;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #2A2A2A;
+        background: #FFFFFF;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #7D5AFF;
+        box-shadow: 0 0 0 3px rgba(125, 90, 255, 0.1);
+    }
+    
+    .btn-analizar {
+        width: 100%;
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 8px;
+    }
+    
+    .btn-analizar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .info-box {
+        background: rgba(77, 196, 123, 0.08);
+        border-left: 4px solid #4DC47B;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    
+    .info-box h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2D9E61;
+        margin-bottom: 8px;
+    }
+    
+    .info-box p {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        line-height: 1.5;
+        margin: 0;
+    }
+    
+    .info-box-right {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+    }
+    
+    .info-box-right h4 {
+        color: #2A2A2A;
+    }
+    
+    .list-item {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #444444;
+        margin-bottom: 12px;
+        padding-left: 24px;
+        position: relative;
+    }
+    
+    .list-item::before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #4DC47B;
+        font-weight: 700;
+    }
+    
+    .predictions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .prediction-item {
+        background: #F9F9F9;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .prediction-info h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin: 0 0 4px 0;
+    }
+    
+    .prediction-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .prediction-action {
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .prediction-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .empty-state {
+        background: #F9F9F9;
+        border: 2px dashed #E6E6E6;
+        border-radius: 8px;
+        padding: 32px 24px;
+        text-align: center;
+    }
+    
+    .empty-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+        opacity: 0.6;
+    }
+    
+    .empty-text {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+    }
+    
+    @media (max-width: 1024px) {
+        .container-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="page-header animate-fade-up delay-1">
+    <h2>Análisis de Predicción</h2>
+    <p class="subtitle">Análisis detallado de rentabilidad e inversión para toma de decisiones</p>
+</header>
+
+<div class="container-grid">
+    <!-- Columna Izquierda: Selector de Predicción -->
+    <div class="animate-fade-up delay-2">
+        <div class="card">
+            <h3 class="card-title">📊 Seleccionar Predicción para Analizar</h3>
+            
+            {% if predicciones %}
+                <div class="form-group">
+                    <label class="form-label">Seleccione una Predicción</label>
+                    <select class="form-control" onchange="if(this.value) window.location='{% url 'analisis_prediccion_detalle' 0 %}'.replace('0', this.value);">
+                        <option value="">-- Seleccione una predicción --</option>
+                        {% for pred in predicciones %}
+                            <option value="{{ pred.pk }}">{{ pred.tipo_arbol.tipo|capfirst }} - {{ pred.comuna.nombre }} ({{ pred.fecha_creacion|date:"d/m/Y" }})</option>
+                        {% endfor %}
+                    </select>
+                    <p style="font-family: 'Inter', sans-serif; font-size: 12px; color: #999999; margin-top: 8px;">
+                        Elija una predicción completada para realizar análisis detallado
+                    </p>
+                </div>
+            {% else %}
+                <div class="form-group">
+                    <label class="form-label">Seleccione una Predicción</label>
+                    <select class="form-control" disabled>
+                        <option value="">No hay predicciones disponibles</option>
+                    </select>
+                    <p style="font-family: 'Inter', sans-serif; font-size: 12px; color: #999999; margin-top: 8px;">
+                        No hay predicciones completadas disponibles para análisis
+                    </p>
+                </div>
+            {% endif %}
+            
+            <div class="info-box" style="margin-top: 24px;">
+                <h4>💡 ¿Qué incluye el análisis?</h4>
+                <div class="list-item">Análisis de Rentabilidad</div>
+                <div class="list-item">Comparación de Alternativas</div>
+                <div class="list-item">Recomendaciones de Inversión</div>
+                <div class="list-item">Riesgo y Viabilidad</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Columna Derecha: Información -->
+    <div class="animate-fade-up delay-3">
+        <div class="card info-box-right">
+            <h3 class="card-title">ℹ️ ¿Qué incluye el análisis?</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <h4 style="font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: #2A2A2A; margin-bottom: 8px;">📊 Análisis de Rentabilidad</h4>
+                <p style="font-family: 'Inter', sans-serif; font-size: 13px; color: #666666; margin: 0;">
+                    • ROI proyectado: Retorno sobre inversión a 5 años<br>
+                    • Tiempo de recuperación: Cuándo recuperará su inversión<br>
+                    • Flujo de caja: Proyección de ingresos y costos<br>
+                    • Análisis de riesgo: Evaluación de factores de riesgo
+                </p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <h4 style="font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: #2A2A2A; margin-bottom: 8px;">🌳 Comparación de Alternativas</h4>
+                <p style="font-family: 'Inter', sans-serif; font-size: 13px; color: #666666; margin: 0;">
+                    • Misma especie en otras regiones<br>
+                    • Otras especies en la misma región<br>
+                    • Análisis comparativo de rendimiento<br>
+                    • Recomendaciones basadas en data
+                </p>
+            </div>
+            
+            <div>
+                <h4 style="font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: #2A2A2A; margin-bottom: 8px;">💼 Recomendaciones</h4>
+                <p style="font-family: 'Inter', sans-serif; font-size: 13px; color: #666666; margin: 0;">
+                    • Decisión de inversión: Proceder o evaluar alternativas<br>
+                    • Optimizaciones: Mejoras en manejo y tecnología<br>
+                    • Diversificación: Estrategias de reducción de riesgo<br>
+                    • Timing: Mejor momento para iniciar el proyecto
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección: Predicciones Disponibles para Análisis -->
+<div class="card animate-fade-up delay-4">
+    <h3 class="card-title">📋 Predicciones Disponibles para Análisis</h3>
+    
+    {% if predicciones %}
+        <div class="predictions-list">
+            {% for prediccion in predicciones %}
+                <div class="prediction-item">
+                    <div class="prediction-info">
+                        <h4>{{ prediccion.tipo_arbol.tipo|capfirst }}</h4>
+                        <p>{{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }} • {{ prediccion.fecha_creacion|date:"d/m/Y" }} • {{ prediccion.hectareas }} ha</p>
+                    </div>
+                    <a href="{% url 'analisis_prediccion_detalle' prediccion.pk %}" class="prediction-action">Analizar</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <p class="empty-text">
+                No hay predicciones disponibles para análisis<br>
+                <span style="font-size: 12px; color: #999999;">Crea una predicción completada primero</span>
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

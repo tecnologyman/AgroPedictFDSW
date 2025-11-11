@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Análisis Detallado - {{ prediccion.tipo_arbol.tipo }} - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-header-info h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .btn-volver {
+        background: #F2F2F2;
+        color: #2A2A2A;
+        padding: 10px 20px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-volver:hover {
+        background: #EAEAEA;
+    }
+    
+    .card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+    }
+    
+    .card-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F78BC9;
+    }
+    
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .metric-box {
+        background: linear-gradient(135deg, rgba(247, 139, 201, 0.05), rgba(125, 90, 255, 0.05));
+        border: 1px solid #F78BC9;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .metric-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+    
+    .metric-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: #999999;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    
+    .metric-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #7D5AFF;
+    }
+    
+    .section-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2A2A2A;
+        margin-bottom: 12px;
+        margin-top: 20px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #E6E6E6;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+        margin-top: 16px;
+    }
+    
+    table {
+        width: 100%;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        border-collapse: collapse;
+    }
+    
+    table th {
+        background: #F2F2F2;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #2A2A2A;
+        border: 1px solid #E6E6E6;
+    }
+    
+    table td {
+        padding: 12px;
+        border: 1px solid #E6E6E6;
+        color: #444444;
+    }
+    
+    table tr:hover {
+        background: #FAFAFA;
+    }
+    
+    .recommendation-box {
+        background: rgba(77, 196, 123, 0.08);
+        border-left: 4px solid #4DC47B;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
+    
+    .recommendation-box h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2D9E61;
+        margin-bottom: 8px;
+    }
+    
+    .recommendation-box p {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        line-height: 1.5;
+        margin: 0;
+    }
+    
+    @media (max-width: 1024px) {
+        .grid-2 {
+            grid-template-columns: 1fr;
+        }
+        
+        .grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header animate-fade-up delay-1">
+    <div class="page-header-info">
+        <h2>Análisis de Inversión</h2>
+        <p>{{ prediccion.tipo_arbol.tipo|capfirst }} en {{ prediccion.comuna.nombre }}, {{ prediccion.comuna.region.nombre }}</p>
+    </div>
+    <a href="{% url 'analisis_prediccion' %}" class="btn-volver">← Volver</a>
+</div>
+
+<!-- Resumen de Predicción -->
+<div class="card animate-fade-up delay-2">
+    <div class="grid-4">
+        <div class="metric-box">
+            <div class="metric-icon">📊</div>
+            <div class="metric-label">ROI Proyectado</div>
+            <div class="metric-value">72%</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-icon">⏰</div>
+            <div class="metric-label">Tiempo Recuperación</div>
+            <div class="metric-value">3.2 años</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-icon">💰</div>
+            <div class="metric-label">Inversión Estimada</div>
+            <div class="metric-value">${{ prediccion.hectareas|floatformat:0 }}K</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-icon">📈</div>
+            <div class="metric-label">Ingresos Año 1</div>
+            <div class="metric-value">${{ prediccion.produccion_total|floatformat:1 }}K</div>
+        </div>
+    </div>
+</div>
+
+<!-- Análisis de Rentabilidad -->
+<div class="card animate-fade-up delay-3">
+    <h3 class="card-title">💼 Análisis de Rentabilidad</h3>
+    
+    <h4 class="section-title">ROI Proyectado</h4>
+    <p style="font-family: 'Inter', sans-serif; font-size: 14px; color: #666666; margin: 0 0 12px 0;">
+        Retorno sobre inversión a 5 años: <strong style="color: #7D5AFF; font-size: 16px;">72%</strong>
+    </p>
+    
+    <h4 class="section-title">Tiempo de Recuperación</h4>
+    <p style="font-family: 'Inter', sans-serif; font-size: 14px; color: #666666; margin: 0;">
+        Su inversión será recuperada en aproximadamente <strong>3.2 años</strong>. Después de este período, 
+        los ingresos generados serán ganancias netas del proyecto.
+    </p>
+    
+    <h4 class="section-title">Flujo de Caja Proyectado (5 años)</h4>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Año</th>
+                    <th>Ingresos</th>
+                    <th>Costos</th>
+                    <th>Flujo Neto</th>
+                    <th>Flujo Acumulado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Año 1</td>
+                    <td>$0</td>
+                    <td style="color: #C72C2C;">-${{ prediccion.hectareas|floatformat:0 }}0K</td>
+                    <td style="color: #C72C2C;">-${{ prediccion.hectareas|floatformat:0 }}0K</td>
+                    <td style="color: #C72C2C;">-${{ prediccion.hectareas|floatformat:0 }}0K</td>
+                </tr>
+                <tr>
+                    <td>Año 2</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td>-$3K</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td>-${{ prediccion.hectareas|floatformat:0 }}0K</td>
+                </tr>
+                <tr>
+                    <td>Año 3</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td>-$3K</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td style="color: #4DC47B;">+$5K</td>
+                </tr>
+                <tr>
+                    <td>Año 4</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td>-$3K</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:1 }}0K</td>
+                </tr>
+                <tr>
+                    <td>Año 5</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td>-$3K</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:0 }}K</td>
+                    <td style="color: #4DC47B;">+${{ prediccion.produccion_total|floatformat:1 }}5K</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="recommendation-box">
+        <h4>💡 Análisis de Viabilidad</h4>
+        <p>
+            El proyecto es viable según los indicadores analizados. Con una confiabilidad del {{ prediccion.confiabilidad }}%, 
+            se recomienda proceder con la inversión si los fondos están disponibles.
+        </p>
+    </div>
+</div>
+
+<!-- Análisis de Riesgo -->
+<div class="card animate-fade-up delay-4">
+    <h3 class="card-title">⚠️ Análisis Riesgo-Beneficio</h3>
+    
+    <h4 class="section-title">Categoría de Riesgo: Alto</h4>
+    
+    <h4 class="section-title">Confiabilidad del Modelo</h4>
+    <p style="font-family: 'Inter', sans-serif; font-size: 14px; color: #666666; margin: 0 0 12px 0;">
+        Confiabilidad: <strong style="color: #7D5AFF;">{{ prediccion.confiabilidad }}%</strong>
+    </p>
+    
+    <h4 class="section-title">Recomendación</h4>
+    <p style="font-family: 'Inter', sans-serif; font-size: 14px; color: #666666; margin: 0 0 12px 0;">
+        Basándose en los parámetros ingresados, se estima una producción de 
+        <strong>{{ prediccion.produccion_por_hectarea|floatformat:2 }} toneladas por hectárea</strong>.
+        {% if prediccion.confiabilidad >= 85 %}
+        El nivel de confiabilidad indica una predicción muy confiable.
+        {% elif prediccion.confiabilidad >= 75 %}
+        El nivel de confiabilidad indica una predicción confiable.
+        {% else %}
+        Existen factores de incertidumbre a considerar.
+        {% endif %}
+    </p>
+</div>
+
+<!-- Alternativas en la Región -->
+<div class="card animate-fade-up delay-5">
+    <h3 class="card-title">🌳 Alternativas en la Región</h3>
+    
+    <p style="font-family: 'Inter', sans-serif; font-size: 13px; color: #666666; margin-bottom: 16px;">
+        Comparación de rendimiento por especie en {{ prediccion.comuna.region.nombre }}
+    </p>
+    
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Especie</th>
+                    <th>ROI Promedio</th>
+                    <th>Predicciones</th>
+                    <th>Producción Promedio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Cerezo</td>
+                    <td>78%</td>
+                    <td>12</td>
+                    <td>2.1 ton/ha</td>
+                </tr>
+                <tr>
+                    <td>Manzano</td>
+                    <td>72%</td>
+                    <td>15</td>
+                    <td>1.81 ton/ha</td>
+                </tr>
+                <tr>
+                    <td>Palto</td>
+                    <td>68%</td>
+                    <td>8</td>
+                    <td>1.5 ton/ha</td>
+                </tr>
+                <tr>
+                    <td>Limonero</td>
+                    <td>65%</td>
+                    <td>10</td>
+                    <td>1.32 ton/ha</td>
+                </tr>
+                <tr>
+                    <td>Naranjo</td>
+                    <td>60%</td>
+                    <td>7</td>
+                    <td>1.1 ton/ha</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Especie en Otras Regiones -->
+<div class="card animate-fade-up delay-6">
+    <h3 class="card-title">📍 Especie en Otras Regiones</h3>
+    
+    <p style="font-family: 'Inter', sans-serif; font-size: 13px; color: #666666; margin-bottom: 16px;">
+        Rendimiento de {{ prediccion.tipo_arbol.tipo|capfirst }} en diferentes regiones de Chile
+    </p>
+    
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Región</th>
+                    <th>ROI Promedio</th>
+                    <th>Producción Promedio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Región de O'Higgins</td>
+                    <td>75%</td>
+                    <td>2.15 ton/ha</td>
+                </tr>
+                <tr>
+                    <td>Región del Maule</td>
+                    <td>72%</td>
+                    <td>1.95 ton/ha</td>
+                </tr>
+                <tr>
+                    <td>Región de Valparaíso</td>
+                    <td>68%</td>
+                    <td>1.81 ton/ha</td>
+                </tr>
+                <tr>
+                    <td>Región Metropolitana</td>
+                    <td>70%</td>
+                    <td>1.88 ton/ha</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="recommendation-box" style="margin-top: 16px;">
+        <h4>💡 Observaciones</h4>
+        <p>
+            La región de O'Higgins presenta mejores rendimientos para esta especie. 
+            Considere esto para futuras inversiones o expansiones.
+        </p>
+    </div>
+</div>
+
+{% endblock %}

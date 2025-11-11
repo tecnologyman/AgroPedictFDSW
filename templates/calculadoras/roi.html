@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora de ROI Agrícola - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-header-info h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #999999;
+    }
+    
+    .breadcrumb a {
+        color: #7D5AFF;
+        text-decoration: none;
+    }
+    
+    .btn-volver {
+        background: #F2F2F2;
+        color: #2A2A2A;
+        padding: 10px 20px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-volver:hover {
+        background: #EAEAEA;
+    }
+    
+    .container-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+    
+    .card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F78BC9;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #444444;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-hint {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #999999;
+        margin-bottom: 6px;
+        font-style: italic;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #2A2A2A;
+        background: #FFFFFF;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #7D5AFF;
+        box-shadow: 0 0 0 3px rgba(125, 90, 255, 0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    .btn-calcular {
+        width: 100%;
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 12px;
+    }
+    
+    .btn-calcular:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .results-section {
+        display: none;
+    }
+    
+    .results-section.show {
+        display: block;
+    }
+    
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    
+    .result-item {
+        background: linear-gradient(135deg, rgba(247, 139, 201, 0.05), rgba(125, 90, 255, 0.05));
+        border: 1px solid #F78BC9;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .result-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #999999;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    
+    .result-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: #7D5AFF;
+    }
+    
+    .result-unit {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: #666666;
+        margin-top: 4px;
+    }
+    
+    .info-box {
+        background: rgba(77, 196, 123, 0.08);
+        border-left: 4px solid #4DC47B;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    
+    .info-box h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #2D9E61;
+        margin-bottom: 8px;
+    }
+    
+    .info-box p {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .info-box ul {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        margin: 8px 0 0 20px;
+        padding: 0;
+    }
+    
+    .info-box li {
+        margin-bottom: 4px;
+    }
+    
+    @media (max-width: 1024px) {
+        .container-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .results-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header animate-fade-up delay-1">
+    <div class="page-header-info">
+        <h2>💰 Calculadora de ROI Agrícola</h2>
+        <p class="breadcrumb"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a> / ROI</p>
+    </div>
+    <a href="{% url 'calculadoras_agricolas' %}" class="btn-volver">← Volver</a>
+</div>
+
+<div class="container-layout">
+    <!-- Columna Izquierda: Formulario -->
+    <div class="animate-fade-up delay-2">
+        <div class="card">
+            <h3 class="card-title">📊 Datos de Entrada</h3>
+            
+            <form id="roiForm" method="POST">
+                {% csrf_token %}
+                
+                <!-- Sección 1: Inversión -->
+                <div class="form-group">
+                    <label class="form-label">Inversión Inicial ($/ha)</label>
+                    <div class="form-hint">Costo de establecimiento del cultivo</div>
+                    <input type="number" name="inversion" class="form-control" step="100" placeholder="ej. 150000" required>
+                </div>
+                
+                <!-- Sección 2: Producción y Precio -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Producción Anual (ton/ha)</label>
+                        <div class="form-hint">Toneladas producidas por hectárea</div>
+                        <input type="number" name="produccion" class="form-control" step="0.1" placeholder="ej. 20" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Precio ($/ton)</label>
+                        <div class="form-hint">Precio de venta del producto</div>
+                        <input type="number" name="precio" class="form-control" step="100" placeholder="ej. 50000" required>
+                    </div>
+                </div>
+                
+                <!-- Sección 3: Costos -->
+                <div class="form-group">
+                    <label class="form-label">Costos Operativos Anuales ($/ha)</label>
+                    <div class="form-hint">Mano de obra, insumos, riego, etc.</div>
+                    <input type="number" name="costos" class="form-control" step="100" placeholder="ej. 30000" required>
+                </div>
+                
+                <!-- Sección 4: Período -->
+                <div class="form-group">
+                    <label class="form-label">Período de Evaluación (años)</label>
+                    <div class="form-hint">Cuántos años para evaluar el ROI</div>
+                    <select name="periodo" class="form-control" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option value="3">3 años</option>
+                        <option value="5">5 años</option>
+                        <option value="10">10 años</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-calcular">📈 Calcular ROI</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Columna Derecha: Información -->
+    <div class="animate-fade-up delay-3">
+        <div class="card">
+            <h3 class="card-title">ℹ️ Guía de Uso</h3>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>📋 ¿Cómo usar esta calculadora?</h4>
+                <p>
+                    Ingresa la inversión inicial, producción esperada, precio de venta y costos anuales. 
+                    La calculadora mostrará el ROI y tiempo de recuperación.
+                </p>
+            </div>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>💡 Fórmulas Utilizadas</h4>
+                <p>
+                    Ingreso = Producción × Precio<br>
+                    Utilidad = (Ingreso - Costos) × Período<br>
+                    ROI = (Utilidad / Inversión) × 100<br>
+                    <span style="font-size: 12px; margin-top: 4px; display: block;">Cálculos básicos sin descuento temporal</span>
+                </p>
+            </div>
+            
+            <div class="info-box">
+                <h4>⚠️ Recomendaciones</h4>
+                <ul>
+                    <li>Usar precios históricos promedio</li>
+                    <li>Considerar variabilidad climática</li>
+                    <li>Incluir imprevistos en costos (10%)</li>
+                    <li>Consultar datos locales actualizados</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resultados -->
+<div id="resultadosSection" class="results-section animate-fade-up delay-4">
+    <div class="card">
+        <h3 class="card-title">✅ Resultados del Cálculo</h3>
+        
+        <div class="results-grid">
+            <div class="result-item">
+                <div class="result-label">ROI</div>
+                <div class="result-value" id="resultROI">-</div>
+                <div class="result-unit">%</div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Utilidad Neta</div>
+                <div class="result-value" id="resultUtilidad">-</div>
+                <div class="result-unit">$/ha</div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Recuperación</div>
+                <div class="result-value" id="resultRecuperacion">-</div>
+                <div class="result-unit">años</div>
+            </div>
+        </div>
+        
+        <div class="info-box" style="margin-top: 24px;">
+            <h4>💡 Interpretación</h4>
+            <p id="interpretacion">El ROI indica el retorno porcentual sobre la inversión inicial en el período especificado.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('roiForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const inversion = parseFloat(document.querySelector('input[name="inversion"]').value);
+    const produccion = parseFloat(document.querySelector('input[name="produccion"]').value);
+    const precio = parseFloat(document.querySelector('input[name="precio"]').value);
+    const costos = parseFloat(document.querySelector('input[name="costos"]').value);
+    const periodo = parseInt(document.querySelector('select[name="periodo"]').value);
+    
+    // Cálculos
+    const ingresoBruto = produccion * precio;
+    const ingresoBrutoTotal = ingresoBruto * periodo;
+    const costosTotal = costos * periodo;
+    const utilidad = ingresoBrutoTotal - costosTotal;
+    const roi = (utilidad / inversion) * 100;
+    const recuperacion = inversion / (ingresoBruto - costos);
+    
+    // Mostrar resultados
+    document.getElementById('resultROI').textContent = roi.toFixed(1);
+    document.getElementById('resultUtilidad').textContent = utilidad.toLocaleString('es-CL', {maximumFractionDigits: 0});
+    document.getElementById('resultRecuperacion').textContent = recuperacion.toFixed(2);
+    
+    document.getElementById('resultadosSection').classList.add('show');
+});
+</script>
+
+{% endblock %}

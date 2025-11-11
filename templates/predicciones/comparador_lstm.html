@@ -1,0 +1,994 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Análisis LSTM Personalizado - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .lstm-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 40px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .lstm-hero h1 {
+        font-size: 36px;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .lstm-hero p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.95;
+    }
+
+    .container-lstm {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .section-header {
+        margin: 40px 0 25px 0;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #667eea;
+    }
+
+    .section-header h2 {
+        margin: 0;
+        color: #333;
+        font-size: 24px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .step-badge {
+        display: inline-block;
+        background: #667eea;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .grid-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    @media (max-width: 1024px) {
+        .grid-2col {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+    }
+
+    .card h3 {
+        color: #333;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 13px;
+    }
+
+    .data-table thead {
+        background: #f8f9fa;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .data-table th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .data-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .data-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .data-table input {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .data-table input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+        background: #f0f0f0;
+        color: #333;
+    }
+
+    .btn-secondary:hover {
+        background: #e0e0e0;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-top: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        border: 1px solid #eee;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .metric-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .metric-label {
+        font-size: 12px;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .diagnosis-box {
+        background: #f8f9fa;
+        border-left: 4px solid;
+        padding: 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+    }
+
+    .diagnosis-box.good {
+        background: #e8f5e9;
+        border-color: #4caf50;
+    }
+
+    .diagnosis-box.warning {
+        background: #fff3e0;
+        border-color: #ff9800;
+    }
+
+    .diagnosis-box.poor {
+        background: #ffebee;
+        border-color: #f44336;
+    }
+
+    .diagnosis-box h4 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .diagnosis-box p {
+        margin: 0;
+        color: #555;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .diagnosis-box ul {
+        margin: 10px 0 0 20px;
+        padding: 0;
+    }
+
+    .diagnosis-box li {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .slider-group {
+        margin: 20px 0;
+    }
+
+    .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .slider-label span:last-child {
+        color: #667eea;
+        font-weight: 700;
+    }
+
+    input[type="range"] {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: #ddd;
+        outline: none;
+        -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+    }
+
+    input[type="range"]::-moz-range-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    }
+
+    .tabs {
+        display: flex;
+        border-bottom: 2px solid #eee;
+        margin-bottom: 20px;
+        gap: 10px;
+    }
+
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #999;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .recommendation-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .recommendation-list li {
+        padding: 12px;
+        margin: 8px 0;
+        background: #f0f4ff;
+        border-left: 3px solid #667eea;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .recommendation-list li strong {
+        color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lstm-hero">
+    <div class="container-lstm">
+        <h1>🧠 Análisis LSTM Personalizado</h1>
+        <p>Ingresa tus datos históricos para calibrar predicciones y ver cómo rinde tu predio vs. el promedio regional</p>
+    </div>
+</div>
+
+<div class="container-lstm">
+
+    <!-- PASO 1: DATOS HISTÓRICOS -->
+    <div class="section-header">
+        <h2>
+            <span class="step-badge">1</span>
+            Datos Históricos (10 años)
+        </h2>
+    </div>
+
+    <div class="grid-2col">
+        <div class="card">
+            <h3>📊 Ingresa tus rendimientos reales</h3>
+            <p style="color: #888; font-size: 13px; margin-bottom: 15px;">
+                Completa los campos con los datos de producción real de los últimos 10 años. 
+                Esto permitirá calibrar el modelo a tu predio específico.
+            </p>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Año</th>
+                        <th>Tu Rendimiento (ton/ha)</th>
+                    </tr>
+                </thead>
+                <tbody id="historical-data">
+                    <tr><td>2014</td><td><input type="number" class="year-real" data-year="2014" placeholder="9.2" step="0.1"></td></tr>
+                    <tr><td>2015</td><td><input type="number" class="year-real" data-year="2015" placeholder="9.8" step="0.1"></td></tr>
+                    <tr><td>2016</td><td><input type="number" class="year-real" data-year="2016" placeholder="8.5" step="0.1"></td></tr>
+                    <tr><td>2017</td><td><input type="number" class="year-real" data-year="2017" placeholder="10.2" step="0.1"></td></tr>
+                    <tr><td>2018</td><td><input type="number" class="year-real" data-year="2018" placeholder="9.1" step="0.1"></td></tr>
+                    <tr><td>2019</td><td><input type="number" class="year-real" data-year="2019" placeholder="9.9" step="0.1"></td></tr>
+                    <tr><td>2020</td><td><input type="number" class="year-real" data-year="2020" placeholder="8.8" step="0.1"></td></tr>
+                    <tr><td>2021</td><td><input type="number" class="year-real" data-year="2021" placeholder="10.1" step="0.1"></td></tr>
+                    <tr><td>2022</td><td><input type="number" class="year-real" data-year="2022" placeholder="9.5" step="0.1"></td></tr>
+                    <tr><td>2023</td><td><input type="number" class="year-real" data-year="2023" placeholder="10.3" step="0.1"></td></tr>
+                </tbody>
+            </table>
+
+            <button class="btn btn-primary" onclick="calcularAnalisis()" style="margin-top: 20px; width: 100%;">
+                🔍 Analizar Mis Datos
+            </button>
+        </div>
+
+        <!-- Predicción General Referencia -->
+        <div class="card">
+            <h3>🎯 Predicción General (Referencia)</h3>
+            <p style="color: #888; font-size: 13px; margin-bottom: 15px;">
+                Valores de referencia del modelo regional sin personalización.
+            </p>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Año</th>
+                        <th>Predicción Regional (ton/ha)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>2014</td><td>9.2</td></tr>
+                    <tr><td>2015</td><td>9.5</td></tr>
+                    <tr><td>2016</td><td>8.9</td></tr>
+                    <tr><td>2017</td><td>9.8</td></tr>
+                    <tr><td>2018</td><td>9.0</td></tr>
+                    <tr><td>2019</td><td>9.6</td></tr>
+                    <tr><td>2020</td><td>8.7</td></tr>
+                    <tr><td>2021</td><td>9.9</td></tr>
+                    <tr><td>2022</td><td>9.3</td></tr>
+                    <tr><td>2023</td><td>9.7</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PASO 2: ANÁLISIS DE AJUSTE -->
+    <div class="section-header">
+        <h2>
+            <span class="step-badge">2</span>
+            Análisis de Calibración
+        </h2>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-box">
+            <div class="metric-value" id="r2-value">-</div>
+            <div class="metric-label">Coeficiente R²</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-value" id="rmse-value">-</div>
+            <div class="metric-label">RMSE (ton/ha)</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-value" id="bias-value">-</div>
+            <div class="metric-label">Sesgo Promedio</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-value" id="avg-real">-</div>
+            <div class="metric-label">Promedio Tu Predio</div>
+        </div>
+    </div>
+
+    <div id="diagnosis-container"></div>
+
+    <!-- PASO 3: GRÁFICO COMPARATIVO -->
+    <div class="section-header">
+        <h2>
+            <span class="step-badge">3</span>
+            Comparación: Predicción vs. Realidad
+        </h2>
+    </div>
+
+    <div class="card">
+        <div class="chart-container">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+        <p style="color: #888; font-size: 12px; text-align: center; margin-top: 10px;">
+            Línea azul: Predicción Regional | Línea naranja: Tus Rendimientos Reales
+        </p>
+    </div>
+
+    <!-- PASO 4: PARÁMETROS DE PREDICCIÓN -->
+    <div class="section-header">
+        <h2>
+            <span class="step-badge">4</span>
+            Personaliza tu Predicción Futura
+        </h2>
+    </div>
+
+    <div class="grid-2col">
+        <div class="card">
+            <h3>⚙️ Parámetros Climáticos</h3>
+            
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>📈 Tendencia General</span>
+                    <span id="trend-value">0%</span>
+                </div>
+                <input type="range" id="trend-slider" min="-5" max="5" value="0" step="0.1" 
+                       oninput="updateTrendValue(); updateFutureChart();">
+                <small style="color: #999;">Cambio promedio anual esperado</small>
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label">
+                    <span>🌧️ Variabilidad Climática</span>
+                    <span id="noise-value">1.0</span>
+                </div>
+                <input type="range" id="noise-slider" min="0" max="2" value="1" step="0.1" 
+                       oninput="updateNoiseValue(); updateFutureChart();">
+                <small style="color: #999;">Rango de variación en rendimiento</small>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>💡 Escenarios de Producción</h3>
+            <p style="color: #888; font-size: 13px; margin-bottom: 15px;">
+                Basados en tu sesgo promedio y variabilidad esperada.
+            </p>
+
+            <div class="metrics-grid">
+                <div style="background: #fff3e0; padding: 15px; border-radius: 6px; border-left: 3px solid #ff9800;">
+                    <div style="font-size: 12px; color: #999; margin-bottom: 5px;">ESCENARIO PESIMISTA</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #f57c00;" id="scenario-low">-</div>
+                    <div style="font-size: 11px; color: #999;">ton/ha</div>
+                </div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 6px; border-left: 3px solid #4caf50;">
+                    <div style="font-size: 12px; color: #999; margin-bottom: 5px;">ESCENARIO CENTRAL</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #388e3c;" id="scenario-mid">-</div>
+                    <div style="font-size: 11px; color: #999;">ton/ha</div>
+                </div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 6px; border-left: 3px solid #4caf50;">
+                    <div style="font-size: 12px; color: #999; margin-bottom: 5px;">ESCENARIO OPTIMISTA</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #2e7d32;" id="scenario-high">-</div>
+                    <div style="font-size: 11px; color: #999;">ton/ha</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASO 5: PREDICCIÓN FUTURA PERSONALIZADA -->
+    <div class="section-header">
+        <h2>
+            <span class="step-badge">5</span>
+            Predicción Personalizada (Próximos 10 años)
+        </h2>
+    </div>
+
+    <div class="card">
+        <div class="chart-container">
+            <canvas id="futureChart"></canvas>
+        </div>
+        <p style="color: #888; font-size: 12px; text-align: center; margin-top: 10px;">
+            Proyección ajustada según tu sesgo histórico y parámetros climáticos
+        </p>
+    </div>
+
+    <!-- PASO 6: RECOMENDACIONES -->
+    <div class="section-header">
+        <h2>
+            <span class="step-badge">6</span>
+            Recomendaciones Personalizadas
+        </h2>
+    </div>
+
+    <div class="card">
+        <div id="recommendations-container">
+            <p style="color: #999;">Completa el análisis para ver recomendaciones...</p>
+        </div>
+    </div>
+
+    <!-- GUARDAR DATOS (LOCAL STORAGE) -->
+    <div style="margin-top: 40px; margin-bottom: 40px; text-align: center;">
+        <button class="btn btn-primary" onclick="guardarDatosLocal()">
+            💾 Guardar Análisis Localmente
+        </button>
+        <button class="btn btn-secondary" onclick="limpiarDatos()" style="margin-left: 10px;">
+            🔄 Limpiar Todo
+        </button>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let comparisonChart, futureChart;
+
+    function updateTrendValue() {
+        const value = document.getElementById('trend-slider').value;
+        document.getElementById('trend-value').textContent = value + '%';
+    }
+
+    function updateNoiseValue() {
+        const value = document.getElementById('noise-slider').value;
+        document.getElementById('noise-value').textContent = value;
+    }
+
+    function calcularAnalisis() {
+        const realValues = [];
+        const predictedValues = [9.2, 9.5, 8.9, 9.8, 9.0, 9.6, 8.7, 9.9, 9.3, 9.7];
+        const years = ['2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023'];
+
+        // Recolectar datos ingresados
+        document.querySelectorAll('.year-real').forEach(input => {
+            const val = parseFloat(input.value) || null;
+            realValues.push(val);
+        });
+
+        // Validar que hay al menos algunos datos
+        const validValues = realValues.filter(v => v !== null);
+        if (validValues.length < 5) {
+            alert('Por favor ingresa al menos 5 datos históricos');
+            return;
+        }
+
+        // Calcular R², RMSE, Sesgo
+        const r2 = calcularR2(realValues, predictedValues);
+        const rmse = calcularRMSE(realValues, predictedValues);
+        const sesgo = calcularSesgo(realValues, predictedValues);
+        const avgReal = validValues.reduce((a, b) => a + b) / validValues.length;
+
+        // Actualizar métricas
+        document.getElementById('r2-value').textContent = (r2 * 100).toFixed(1) + '%';
+        document.getElementById('rmse-value').textContent = rmse.toFixed(2);
+        document.getElementById('bias-value').textContent = (sesgo > 0 ? '+' : '') + sesgo.toFixed(2);
+        document.getElementById('avg-real').textContent = avgReal.toFixed(2);
+
+        // Diagnóstico
+        generarDiagnostico(r2, sesgo, validValues);
+
+        // Gráfico comparativo
+        actualizarGraficoComparativo(years, realValues, predictedValues);
+
+        // Escenarios
+        actualizarEscenarios(avgReal, sesgo);
+
+        // Gráfico futuro
+        actualizarGraficoFuturo(avgReal, sesgo);
+
+        // Recomendaciones
+        generarRecomendaciones(r2, sesgo, avgReal);
+
+        // Guardar en localStorage
+        guardarDatosLocal();
+    }
+
+    function calcularR2(real, predicted) {
+        const validIndices = real.map((v, i) => v !== null ? i : null).filter(i => i !== null);
+        if (validIndices.length < 2) return 0;
+
+        const realValid = validIndices.map(i => real[i]);
+        const predValid = validIndices.map(i => predicted[i]);
+        
+        const meanReal = realValid.reduce((a, b) => a + b) / realValid.length;
+        const ssTot = realValid.reduce((sum, v) => sum + Math.pow(v - meanReal, 2), 0);
+        const ssRes = realValid.reduce((sum, v, i) => sum + Math.pow(v - predValid[i], 2), 0);
+        
+        return ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
+    }
+
+    function calcularRMSE(real, predicted) {
+        const validIndices = real.map((v, i) => v !== null ? i : null).filter(i => i !== null);
+        if (validIndices.length === 0) return 0;
+
+        const suma = validIndices.reduce((sum, i) => sum + Math.pow(real[i] - predicted[i], 2), 0);
+        return Math.sqrt(suma / validIndices.length);
+    }
+
+    function calcularSesgo(real, predicted) {
+        const validIndices = real.map((v, i) => v !== null ? i : null).filter(i => i !== null);
+        if (validIndices.length === 0) return 0;
+
+        const suma = validIndices.reduce((sum, i) => sum + (real[i] - predicted[i]), 0);
+        return suma / validIndices.length;
+    }
+
+    function generarDiagnostico(r2, sesgo, validValues) {
+        let diagnostico = '';
+        let clase = 'good';
+
+        if (r2 >= 0.7) {
+            diagnostico = `
+                <h4>✅ EXCELENTE AJUSTE (R² = ${(r2*100).toFixed(1)}%)</h4>
+                <p>El modelo regional se adapta muy bien a tu predio. Las predicciones serán muy confiables.</p>
+                <ul>
+                    <li><strong>Sesgo:</strong> Tu predio produce ${sesgo > 0 ? '+' : ''}${sesgo.toFixed(2)} ton/ha 
+                        ${sesgo > 0 ? 'MÁS' : 'MENOS'} que el promedio regional</li>
+                    <li><strong>Recomendación:</strong> Mantén tus prácticas actuales de manejo</li>
+                </ul>
+            `;
+        } else if (r2 >= 0.5) {
+            clase = 'warning';
+            diagnostico = `
+                <h4>⚠️ AJUSTE MODERADO (R² = ${(r2*100).toFixed(1)}%)</h4>
+                <p>El modelo regional se adapta parcialmente. Investiga factores locales específicos.</p>
+                <ul>
+                    <li><strong>Posibles factores:</strong> Tipo de suelo, riego, control de plagas</li>
+                    <li><strong>Sesgo:</strong> ${sesgo > 0 ? '+' : ''}${sesgo.toFixed(2)} ton/ha respecto al regional</li>
+                    <li><strong>Próximos pasos:</strong> Recolecta más datos climáticos locales</li>
+                </ul>
+            `;
+        } else {
+            clase = 'poor';
+            diagnostico = `
+                <h4>❌ AJUSTE BAJO (R² = ${(r2*100).toFixed(1)}%)</h4>
+                <p>El modelo regional NO es válido para tu predio. Se necesita más análisis.</p>
+                <ul>
+                    <li><strong>Investigar:</strong> Condiciones microclimáticas locales</li>
+                    <li><strong>Verificar:</strong> Precisión de los datos históricos ingresados</li>
+                    <li><strong>Acción:</strong> Consulta con un agrónom local</li>
+                </ul>
+            `;
+        }
+
+        document.getElementById('diagnosis-container').innerHTML = 
+            `<div class="diagnosis-box ${clase}">${diagnostico}</div>`;
+    }
+
+    function actualizarGraficoComparativo(years, real, predicted) {
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        
+        if (comparisonChart) comparisonChart.destroy();
+
+        comparisonChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: years,
+                datasets: [
+                    {
+                        label: 'Predicción Regional',
+                        data: predicted,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#667eea'
+                    },
+                    {
+                        label: 'Tu Rendimiento Real',
+                        data: real,
+                        borderColor: '#ff9800',
+                        backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#ff9800'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, padding: 15 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 7,
+                        max: 12,
+                        ticks: { callback: v => v + ' ton/ha' }
+                    }
+                }
+            }
+        });
+    }
+
+    function actualizarEscenarios(avgReal, sesgo) {
+        const trend = parseFloat(document.getElementById('trend-slider').value) / 100;
+        const noise = parseFloat(document.getElementById('noise-slider').value);
+
+        const base = avgReal + sesgo;
+        const bajo = (base * (1 + trend * 10)) - (noise * 0.5);
+        const medio = base * (1 + trend * 10);
+        const alto = (base * (1 + trend * 10)) + (noise * 0.5);
+
+        document.getElementById('scenario-low').textContent = bajo.toFixed(2);
+        document.getElementById('scenario-mid').textContent = medio.toFixed(2);
+        document.getElementById('scenario-high').textContent = alto.toFixed(2);
+    }
+
+    function actualizarGraficoFuturo(avgReal, sesgo) {
+        const ctx = document.getElementById('futureChart').getContext('2d');
+        const trend = parseFloat(document.getElementById('trend-slider').value) / 100;
+        const noise = parseFloat(document.getElementById('noise-slider').value);
+
+        const yearsLabel = Array.from({length: 10}, (_, i) => (2024 + i).toString());
+        const values = [];
+        const low = [];
+        const high = [];
+
+        for (let i = 0; i < 10; i++) {
+            const base = avgReal + sesgo;
+            const val = base * (1 + trend * i);
+            values.push(val);
+            low.push(val - (noise * 0.3 * i));
+            high.push(val + (noise * 0.3 * i));
+        }
+
+        if (futureChart) futureChart.destroy();
+
+        futureChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: yearsLabel,
+                datasets: [
+                    {
+                        label: 'Predicción Central',
+                        data: values,
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#4caf50'
+                    },
+                    {
+                        label: 'Rango (Pesimista - Optimista)',
+                        data: high,
+                        borderColor: 'rgba(76, 175, 80, 0.3)',
+                        backgroundColor: 'rgba(76, 175, 80, 0.05)',
+                        borderWidth: 1,
+                        fill: '-1',
+                        tension: 0.4,
+                        pointRadius: 0,
+                        borderDash: [5, 5]
+                    },
+                    {
+                        label: 'Escenario Pesimista',
+                        data: low,
+                        borderColor: 'rgba(76, 175, 80, 0.3)',
+                        borderWidth: 1,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } },
+                    filler: { propagate: true }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: { callback: v => v.toFixed(1) + ' ton/ha' }
+                    }
+                }
+            }
+        });
+    }
+
+    function generarRecomendaciones(r2, sesgo, avgReal) {
+        const recomendaciones = [];
+
+        if (sesgo > 0.5) {
+            recomendaciones.push('✅ <strong>Predio de alto rendimiento:</strong> Tu producción supera consistentemente el promedio regional. Considera expandir producción.');
+        } else if (sesgo < -0.5) {
+            recomendaciones.push('📌 <strong>Optimización necesaria:</strong> Tu rendimiento está bajo el regional. Revisa prácticas de manejo y riego.');
+        }
+
+        if (r2 > 0.7) {
+            recomendaciones.push('✅ <strong>Modelo confiable:</strong> Las predicciones para tu predio serán precisas.');
+        } else {
+            recomendaciones.push('⚠️ <strong>Necesitas más datos:</strong> Continúa registrando rendimientos para mejorar la calibración.');
+        }
+
+        const trend = parseFloat(document.getElementById('trend-slider').value);
+        if (trend > 1) {
+            recomendaciones.push('📈 <strong>Tendencia positiva:</strong> Con las medidas especificadas, esperas crecimiento en producción.');
+        } else if (trend < -1) {
+            recomendaciones.push('📉 <strong>Atención:</strong> Revisa si hay factores negativos en tu sistema productivo.');
+        }
+
+        recomendaciones.push('💾 <strong>Guardar datos:</strong> Usa el botón de guardar para mantener tu análisis.');
+
+        const html = `<ul class="recommendation-list">${recomendaciones.map(r => `<li>${r}</li>`).join('')}</ul>`;
+        document.getElementById('recommendations-container').innerHTML = html;
+    }
+
+    function updateFutureChart() {
+        const inputs = Array.from(document.querySelectorAll('.year-real'))
+            .map(i => parseFloat(i.value) || null);
+        const validValues = inputs.filter(v => v !== null);
+        if (validValues.length > 0) {
+            const avg = validValues.reduce((a, b) => a + b) / validValues.length;
+            const predicted = [9.2, 9.5, 8.9, 9.8, 9.0, 9.6, 8.7, 9.9, 9.3, 9.7];
+            const sesgo = calcularSesgo(inputs, predicted);
+            actualizarGraficoFuturo(avg, sesgo);
+            actualizarEscenarios(avg, sesgo);
+        }
+    }
+
+    function guardarDatosLocal() {
+        const datos = {
+            timestamp: new Date().toISOString(),
+            historicos: Array.from(document.querySelectorAll('.year-real')).map(i => ({
+                year: i.dataset.year,
+                value: parseFloat(i.value) || null
+            })),
+            trend: document.getElementById('trend-slider').value,
+            noise: document.getElementById('noise-slider').value,
+            r2: document.getElementById('r2-value').textContent,
+            rmse: document.getElementById('rmse-value').textContent,
+            bias: document.getElementById('bias-value').textContent
+        };
+        localStorage.setItem('agropredict_lstm_analysis', JSON.stringify(datos));
+        alert('✅ Análisis guardado localmente');
+    }
+
+    function limpiarDatos() {
+        if (confirm('¿Estás seguro de limpiar todos los datos?')) {
+            document.querySelectorAll('.year-real').forEach(i => i.value = '');
+            document.getElementById('trend-slider').value = 0;
+            document.getElementById('noise-slider').value = 1;
+            updateTrendValue();
+            updateNoiseValue();
+            document.getElementById('diagnosis-container').innerHTML = '';
+            document.getElementById('recommendations-container').innerHTML = '<p style="color: #999;">Completa el análisis para ver recomendaciones...</p>';
+            localStorage.removeItem('agropredict_lstm_analysis');
+        }
+    }
+
+    // Cargar datos guardados al iniciar
+    window.addEventListener('load', () => {
+        const saved = localStorage.getItem('agropredict_lstm_analysis');
+        if (saved) {
+            const datos = JSON.parse(saved);
+            datos.historicos.forEach(d => {
+                const input = document.querySelector(`.year-real[data-year="${d.year}"]`);
+                if (input && d.value) input.value = d.value;
+            });
+            document.getElementById('trend-slider').value = datos.trend || 0;
+            document.getElementById('noise-slider').value = datos.noise || 1;
+            updateTrendValue();
+            updateNoiseValue();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora de Fertilización NPK - AgroPredict{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-header-info h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 8px;
+    }
+    
+    .page-header-info p {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #666666;
+        margin: 0;
+    }
+    
+    .breadcrumb {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #999999;
+    }
+    
+    .breadcrumb a {
+        color: #7D5AFF;
+        text-decoration: none;
+    }
+    
+    .btn-volver {
+        background: #F2F2F2;
+        color: #2A2A2A;
+        padding: 10px 20px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-volver:hover {
+        background: #EAEAEA;
+    }
+    
+    .container-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+    
+    .card {
+        background: #FFFFFF;
+        border: 1px solid #E6E6E6;
+        border-radius: 14px;
+        padding: 28px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        color: #2A2A2A;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F78BC9;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #444444;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-hint {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #999999;
+        margin-bottom: 6px;
+        font-style: italic;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid #E6E6E6;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        color: #2A2A2A;
+        background: #FFFFFF;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #7D5AFF;
+        box-shadow: 0 0 0 3px rgba(125, 90, 255, 0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    .btn-calcular {
+        width: 100%;
+        background: linear-gradient(135deg, #F78BC9, #7D5AFF);
+        color: #FFFFFF;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 8px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 12px;
+    }
+    
+    .btn-calcular:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(247, 139, 201, 0.4);
+    }
+    
+    .results-section {
+        display: none;
+    }
+    
+    .results-section.show {
+        display: block;
+    }
+    
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    
+    .result-item {
+        background: linear-gradient(135deg, rgba(247, 139, 201, 0.05), rgba(125, 90, 255, 0.05));
+        border: 1px solid #F78BC9;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .result-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #999999;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+    
+    .result-value {
+        font-family: 'Poppins', sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: #7D5AFF;
+    }
+    
+    .result-unit {
+        font-family: 'Inter', sans-serif;
+        font-size: 12px;
+        color: #666666;
+        margin-top: 4px;
+    }
+    
+    .info-box {
+        background: rgba(77, 196, 123, 0.08);
+        border-left: 4px solid #4DC47B;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    
+    .info-box h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #2D9E61;
+        margin-bottom: 8px;
+    }
+    
+    .info-box p {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .info-box ul {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #2D9E61;
+        margin: 8px 0 0 20px;
+        padding: 0;
+    }
+    
+    .info-box li {
+        margin-bottom: 4px;
+    }
+    
+    @media (max-width: 1024px) {
+        .container-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .results-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header animate-fade-up delay-1">
+    <div class="page-header-info">
+        <h2>🧪 Calculadora de Fertilización NPK</h2>
+        <p class="breadcrumb"><a href="{% url 'calculadoras_agricolas' %}">Calculadoras</a> / Fertilización NPK</p>
+    </div>
+    <a href="{% url 'calculadoras_agricolas' %}" class="btn-volver">← Volver</a>
+</div>
+
+<div class="container-layout">
+    <!-- Columna Izquierda: Formulario -->
+    <div class="animate-fade-up delay-2">
+        <div class="card">
+            <h3 class="card-title">📊 Datos de Entrada</h3>
+            
+            <form id="fertForm" method="POST">
+                {% csrf_token %}
+                
+                <!-- Sección 1: Extracción del Cultivo -->
+                <div class="form-group">
+                    <label class="form-label">Extracción de N del Cultivo (kg/ha)</label>
+                    <div class="form-hint">Cantidad de Nitrógeno que extrae el cultivo</div>
+                    <input type="number" name="ext_n" class="form-control" step="0.1" placeholder="ej. 180" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Extracción de P del Cultivo (kg/ha)</label>
+                    <div class="form-hint">Cantidad de Fósforo que extrae el cultivo</div>
+                    <input type="number" name="ext_p" class="form-control" step="0.1" placeholder="ej. 40" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Extracción de K del Cultivo (kg/ha)</label>
+                    <div class="form-hint">Cantidad de Potasio que extrae el cultivo</div>
+                    <input type="number" name="ext_k" class="form-control" step="0.1" placeholder="ej. 150" required>
+                </div>
+                
+                <!-- Sección 2: Aporte del Suelo -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Aporte de N del Suelo (%)</label>
+                        <div class="form-hint">Porcentaje disponible en el suelo</div>
+                        <input type="number" name="aporte_n" class="form-control" step="0.1" value="30" min="0" max="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Aporte de P del Suelo (%)</label>
+                        <div class="form-hint">Porcentaje disponible en el suelo</div>
+                        <input type="number" name="aporte_p" class="form-control" step="0.1" value="20" min="0" max="100" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Aporte de K del Suelo (%)</label>
+                    <div class="form-hint">Porcentaje disponible en el suelo</div>
+                    <input type="number" name="aporte_k" class="form-control" step="0.1" value="25" min="0" max="100" required>
+                </div>
+                
+                <!-- Sección 3: Contenido del Fertilizante -->
+                <div class="form-group">
+                    <label class="form-label">Tipo de Fertilizante</label>
+                    <select name="fertilizante" class="form-control" required>
+                        <option value="">-- Seleccionar --</option>
+                        <option value="10-20-20">10-20-20</option>
+                        <option value="15-15-15">15-15-15</option>
+                        <option value="18-46-0">18-46-0 (DAP)</option>
+                        <option value="20-20-20">20-20-20</option>
+                        <option value="personalizado">Personalizado</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-calcular">📈 Calcular Dosis</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Columna Derecha: Información -->
+    <div class="animate-fade-up delay-3">
+        <div class="card">
+            <h3 class="card-title">ℹ️ Guía de Uso</h3>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>📋 ¿Cómo usar esta calculadora?</h4>
+                <p>
+                    Ingresa los datos de extracción del cultivo, aporte del suelo y el fertilizante a utilizar. 
+                    La calculadora determinará la dosis recomendada en kg/ha.
+                </p>
+            </div>
+            
+            <div class="info-box" style="margin-bottom: 16px;">
+                <h4>💡 Fórmula Utilizada</h4>
+                <p>
+                    Dosis = (Extracción - Aporte) / Contenido<br>
+                    <span style="font-size: 12px; margin-top: 4px; display: block;">Método FAO de fertilización razonada</span>
+                </p>
+            </div>
+            
+            <div class="info-box">
+                <h4>⚠️ Recomendaciones</h4>
+                <ul>
+                    <li>Realizar análisis de suelo periódicamente</li>
+                    <li>Ajustar dosis según disponibilidad de agua</li>
+                    <li>Considerar eficiencia de uso del nutriente</li>
+                    <li>Fraccionar aplicaciones en cultivos anuales</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resultados -->
+<div id="resultadosSection" class="results-section animate-fade-up delay-4">
+    <div class="card">
+        <h3 class="card-title">✅ Resultados del Cálculo</h3>
+        
+        <div class="results-grid">
+            <div class="result-item">
+                <div class="result-label">Dosis N</div>
+                <div class="result-value" id="resultN">-</div>
+                <div class="result-unit">kg/ha</div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Dosis P</div>
+                <div class="result-value" id="resultP">-</div>
+                <div class="result-unit">kg/ha</div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Dosis K</div>
+                <div class="result-value" id="resultK">-</div>
+                <div class="result-unit">kg/ha</div>
+            </div>
+        </div>
+        
+        <div class="info-box" style="margin-top: 24px;">
+            <h4>💡 Interpretación</h4>
+            <p id="interpretacion">Las dosis indicadas son las cantidades recomendadas a aplicar en base a los parámetros ingresados.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('fertForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const extN = parseFloat(document.querySelector('input[name="ext_n"]').value);
+    const extP = parseFloat(document.querySelector('input[name="ext_p"]').value);
+    const extK = parseFloat(document.querySelector('input[name="ext_k"]').value);
+    
+    const aporteN = parseFloat(document.querySelector('input[name="aporte_n"]').value) / 100;
+    const aporteP = parseFloat(document.querySelector('input[name="aporte_p"]').value) / 100;
+    const aporteK = parseFloat(document.querySelector('input[name="aporte_k"]').value) / 100;
+    
+    // Cálculos
+    const necesN = extN * (1 - aporteN);
+    const necesP = extP * (1 - aporteP);
+    const necesK = extK * (1 - aporteK);
+    
+    // Mostrar resultados
+    document.getElementById('resultN').textContent = necesN.toFixed(1);
+    document.getElementById('resultP').textContent = necesP.toFixed(1);
+    document.getElementById('resultK').textContent = necesK.toFixed(1);
+    
+    document.getElementById('resultadosSection').classList.add('show');
+});
+</script>
+
+{% endblock %}

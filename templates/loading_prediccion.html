@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generando Predicción - AgroPredict</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            text-align: center;
+            padding: 2rem;
+            max-width: 400px;
+        }
+
+        /* ============ ÁRBOL SVG ANIMADO ============ */
+        .tree-svg {
+            width: 200px;
+            height: 200px;
+            display: block;
+        }
+
+        /* Tronco */
+        .trunk {
+            fill: url(#trunkGradient);
+        }
+
+        /* Follaje */
+        .leaf1 {
+            fill: #22c55e;
+            animation: growLeaf1 2.5s ease-in-out infinite;
+            transform-origin: 100px 100px;
+        }
+
+        .leaf2 {
+            fill: #16a34a;
+            animation: growLeaf2 2.5s ease-in-out infinite 0.3s;
+            transform-origin: 100px 100px;
+        }
+
+        .leaf3 {
+            fill: #15803d;
+            animation: growLeaf3 2.5s ease-in-out infinite 0.6s;
+            transform-origin: 100px 100px;
+        }
+
+        /* Animaciones de escala */
+        @keyframes growLeaf1 {
+            0% { transform: scaleY(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scaleY(1); opacity: 1; }
+        }
+
+        @keyframes growLeaf2 {
+            0% { transform: scaleY(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scaleY(1); opacity: 1; }
+        }
+
+        @keyframes growLeaf3 {
+            0% { transform: scaleY(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scaleY(1); opacity: 1; }
+        }
+
+        /* Partículas flotantes */
+        .particle {
+            fill: #22c55e;
+            filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.6));
+            animation: float 2.5s ease-in-out infinite;
+        }
+
+        .particle:nth-child(5) { animation-delay: 0s; }
+        .particle:nth-child(6) { animation-delay: 0.4s; }
+        .particle:nth-child(7) { animation-delay: 0.8s; }
+        .particle:nth-child(8) { animation-delay: 1.2s; }
+
+        @keyframes float {
+            0%, 100% { opacity: 0; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-30px); }
+        }
+
+        /* Textos */
+        h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1rem;
+            color: #4b5563;
+            margin: 0;
+            margin-top: 0.5rem;
+        }
+
+        .loading-text small {
+            display: block;
+            font-size: 0.9rem;
+            color: #9ca3af;
+            margin-top: 1rem;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 0.3; }
+            25%, 75% { opacity: 1; }
+        }
+
+        /* Barra de progreso */
+        .progress-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 2rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #16a34a, #15803d);
+            animation: progress 5s ease-in-out forwards;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="loading-container">
+    
+    <!-- ÁRBOL HECHO CON SVG (NO CSS) -->
+    <svg class="tree-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        
+        <!-- Definir gradientes -->
+        <defs>
+            <linearGradient id="trunkGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#8B4513;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#654321;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+
+        <!-- Tronco -->
+        <rect class="trunk" x="95" y="130" width="10" height="50" rx="3"/>
+
+        <!-- Follaje - Triángulos -->
+        <polygon class="leaf1" points="100,50 60,130 140,130"/>
+        <polygon class="leaf2" points="100,80 55,150 145,150"/>
+        <polygon class="leaf3" points="100,110 50,170 150,170"/>
+
+        <!-- Partículas flotantes -->
+        <circle class="particle" cx="70" cy="50" r="4"/>
+        <circle class="particle" cx="140" cy="70" r="4"/>
+        <circle class="particle" cx="60" cy="100" r="4"/>
+        <circle class="particle" cx="150" cy="130" r="4"/>
+        
+    </svg>
+
+    <!-- Textos -->
+    <div>
+        <h1>🌱 Analizando tu cultivo...</h1>
+        <p>Utilizando inteligencia artificial para predecir tu producción</p>
+        <small>Por favor espera</small>
+    </div>
+
+    <!-- Barra de progreso -->
+    <div class="progress-bar">
+        <div class="progress-fill"></div>
+    </div>
+
+</div>
+
+<!-- Script de redirección -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('✅ Loading page iniciada');
+        console.log('📍 Esperando 5 segundos...');
+        
+        setTimeout(function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const prediccionId = urlParams.get('prediccion_id');
+            
+            if (prediccionId) {
+                console.log('✅ Predicción ID encontrada:', prediccionId);
+                console.log('🔄 Redirigiendo a: /prediccion/' + prediccionId + '/');
+                window.location.href = '/prediccion/' + prediccionId + '/';
+            } else {
+                console.log('ℹ️  No se encontró ID, redirigiendo a lista');
+                window.location.href = '/predicciones/';
+            }
+        }, 5000);
+    });
+</script>
+
+</body>
+</html>
