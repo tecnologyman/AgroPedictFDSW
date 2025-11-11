@@ -12,3 +12,4 @@ dj-database-url
 requests
 pandas
 openai
+scikit-learn>=1.5.0
