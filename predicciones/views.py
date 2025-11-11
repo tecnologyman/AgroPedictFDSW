@@ -4,7 +4,8 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Count, Avg, Sum, Q
 from django.conf import settings
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from .models import Prediccion, TipoArbol, Comuna, Region, DatoClimatico, AnalisisPrediccion
 from .forms import PrediccionForm, AnalisisPrediccionForm
@@ -25,12 +26,21 @@ User = get_user_model()
 # ==========================================
 # VISTAS DE IA
 # ==========================================
+client = None
+if getattr(settings, "OPENAI_API_KEY", None) not in [None, "", "placeholder"]:
+    try:
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+    except OpenAIError as e:
+        print(f"[⚠️ OpenAI desactivado] {e}")
+else:
+    print("[ℹ️ Modo demo: OpenAI no inicializado]")
+
 
 def ia_chat_page(request):
     return render(request, "ia_chat.html")
 
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
 
 def ia_consulta(request):
     pregunta = request.GET.get("q") or request.POST.get("q")
