@@ -7,9 +7,9 @@ def create_default_admin(apps, schema_editor):
     from django.contrib.auth import get_user_model
     User = get_user_model()
 
-    username = os.getenv("DJANGO_ADMIN_USER", "admin")
-    email = os.getenv("DJANGO_ADMIN_EMAIL", "admin@agropredict.cl")
-    password = os.getenv("DJANGO_ADMIN_PASS", "AgroPredictFDSW2025!")
+    username = os.getenv("DJANGO_ADMIN_USER", "tecnologyman")
+    email = os.getenv("DJANGO_ADMIN_EMAIL", "tecnologyman@agropredict.cl")
+    password = os.getenv("DJANGO_ADMIN_PASS", "Matiasaguayo13!")
 
     if not User.objects.filter(username=username).exists():
         User.objects.create_superuser(username=username, email=email, password=password)
