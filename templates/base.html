@@ -152,12 +152,94 @@
     }
 }
 
+  .demo-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #7D5AFF, #F78BC9);
+    color: white;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 10px 0;
+    z-index: 9999;
+    opacity: 0;
+    animation: fadeInOut 6s ease forwards;
+  }
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    10%, 80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
 
+.demo-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(90deg, #7d5aff 0%, #f78bc9 100%);
+  color: #fff;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 10px 0;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(-100%);
+  animation: bannerSlide 6s ease forwards;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  letter-spacing: 0.2px;
+}
+
+.demo-icon {
+  margin-right: 6px;
+  font-size: 15px;
+  opacity: 0.9;
+}
+
+/* Animación */
+@keyframes bannerSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  10%, 85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+/* Desplazamiento suave del contenido */
+body.with-demo-banner .main-content {
+  transition: margin-top 0.8s ease;
+  margin-top: 50px;
+}
+
+  @keyframes demoFade {
+    0% { opacity: 0; transform: translate(-50%, -10px); }
+    10%, 80% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -10px); }
+  }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
+
+
 <body>
+      <!-- 🌿 Banner modo demo -->
+  <div id="demo-banner" class="demo-banner">
+    <span class="demo-icon">🧪</span>
+    Este es un entorno de demostración. Algunos datos y funciones son simulados.
+  </div>
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -213,5 +295,17 @@
     <!-- Scripts -->
     <script src="{% static 'js/animations.js' %}"></script>
     {% block extra_js %}{% endblock %}
+    <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const body = document.body;
+    body.classList.add("with-demo-banner");
+
+    // Cuando termina la animación, volver el contenido a su posición normal
+    setTimeout(() => {
+      body.classList.remove("with-demo-banner");
+    }, 6000); // mismo tiempo que la animación CSS
+  });
+</script>
+
 </body>
 </html>
